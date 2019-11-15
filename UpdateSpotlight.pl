@@ -8,11 +8,13 @@ use Image::ExifTool;
 use Digest::SHA qw{ sha256_hex };
 use File::Copy;
 
+use UserIO qw{ pause };
+
 our $VERSION = 0.1;
 
 my $LOCAL = $ENV{LocalAppData};
 my $ASSET_FOLDER = "$LOCAL/Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets";
-my $WALLPAPERS = 'C:/_WorkingSVN_/wallpaper/_current';
+my $WALLPAPERS = 'C:/_WorkingSVN_/wallpaper/1-screen/win10-spotlight';
 
 my %assets = ();
 my %asset_size = ();
@@ -42,6 +44,7 @@ identify_wp_sized();
 compare_existing();
 copy_new_images();
 
+pause();
 exit;
 
 #################################################################
