@@ -115,7 +115,7 @@ sub compare_images {
 sub copy_new_images {
     foreach my $asset (sort keys %assets) {
         my $src = "$ASSET_FOLDER/$asset";
-        my $trg = "$WALLPAPERS/$asset.jpg";
+        my $trg = "$WALLPAPERS/ZZZ_Unsorted_$asset.jpg";
         print "Copying to $trg\n";
         print "OOPS\n" unless -f $src;
         copy($src, $trg);
