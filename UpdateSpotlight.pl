@@ -9,6 +9,7 @@ use Digest::SHA qw{ sha256_hex };
 use File::Copy;
 
 use UserIO qw{ pause };
+use Readonly;
 
 our $VERSION = 0.1;
 
@@ -19,7 +20,7 @@ my $WALLPAPERS = 'C:/_WorkingSVN_/wallpaper/1-screen/win10-spotlight';
 my %assets = ();
 my %asset_size = ();
 
-use constant FILESIZE => 7;
+Readonly my $FILESIZE_INDEX => 7;
 
 %Image::ExifTool::UserDefined::petesplace = (
     GROUPS => { 0 => 'XMP', 1 => 'XMP-petesplace', 2 => 'Image' },
@@ -76,15 +77,14 @@ sub compare_existing {
     chdir $WALLPAPERS;
 
     my %by_size = ();
-    my $filesize = 7;
     foreach my $jpg (glob q{*}) {
-        my $size = (stat $jpg)[FILESIZE];
+        my $size = (stat $jpg)[$FILESIZE_INDEX];
         $by_size{$size}{files}{$jpg} = 1;
         $by_size{$size}{flag} = 1;
     }
 
     foreach my $asset (sort keys %assets) {
-        my $size = (stat "$ASSET_FOLDER/$asset")[FILESIZE];
+        my $size = (stat "$ASSET_FOLDER/$asset")[$FILESIZE_INDEX];
         if (defined $by_size{$size}{flag}) {
             foreach my $jpg (sort keys %{$by_size{$size}{files}}) {
                 if (compare_images($jpg,"$ASSET_FOLDER/$asset")) {
@@ -103,8 +103,9 @@ sub compare_images {
     binmode $FH1 ;
     binmode $FH2 ;
     my $rv = 1;
-    while ($rv && read $FH1,my $block1,8192) {
-        read$FH2,my $block2,8192;
+    Readonly my $BLOCKSIZE => 8192;
+    while ($rv && read $FH1, my $block1, $BLOCKSIZE) {
+        read $FH2, my $block2, $BLOCKSIZE;
         $rv = (sha256_hex($block1) eq sha256_hex($block2));
         }
     close $FH1;
