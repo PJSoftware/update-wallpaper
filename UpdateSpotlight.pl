@@ -7,8 +7,6 @@ use Cwd;
 use Image::ExifTool;
 use Digest::SHA qw{ sha256_hex };
 use File::Copy;
-
-use UserIO qw{ pause };
 use Readonly;
 
 our $VERSION = 0.1;
@@ -124,3 +122,12 @@ sub copy_new_images {
     }
     return;
 }
+
+sub pause {
+    my ($msg) = @_;
+    $msg //= 'Press [Enter] to continue...';
+
+    print "$msg\n";
+    <STDIN>;
+}
+
