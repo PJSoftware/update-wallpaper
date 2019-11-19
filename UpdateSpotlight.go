@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,24 +13,30 @@ import (
 )
 
 const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
-const targetFolder = "C:/_WorkingSVN_/wallpaper/1-screen/win10-spotlight"
 
 var localAppData = os.Getenv("LOCALAPPDATA")
 var sourcePath = localAppData + "/" + sourceFolder
 
+// TODO: Read paths, etc from INI file
+const targetFolder = "C:/Wallpaper"
+
 var assetBySize map[int64]map[string]string
+var toBeCopied map[string]bool
+var fileName map[string]string // Let's cache the filenames so we don't need to re-extract
+var fileExt map[string]string
 
 func main() {
-	browseAssets(sourcePath)
-	// scanExisting(targetFolder)
-	// compare_existing()
-	// copy_new_images()
+	found := browseAssets(sourcePath)
+	dups := scanExisting(targetFolder)
 
-	// summary()
-	// pause()
+	copied := 0
+	if found > dups {
+		copied = copyNewAssets(targetFolder)
+	}
+	fmt.Printf("%d new images copied\n", copied)
 }
 
-func browseAssets(sourcePath string) {
+func browseAssets(sourcePath string) int {
 	assetsFound := 0
 	files, err := ioutil.ReadDir(sourcePath)
 	if err != nil {
@@ -37,19 +44,26 @@ func browseAssets(sourcePath string) {
 	}
 
 	assetBySize = make(map[int64]map[string]string)
+	toBeCopied = make(map[string]bool)
+	fileName = make(map[string]string)
+	fileExt = make(map[string]string)
+
 	for _, file := range files {
-		filePath := sourcePath + "/" + file.Name()
-		if isWallpaper(filePath, 1920, 1080) {
+		assetPath := sourcePath + "/" + file.Name()
+		if isWallpaper(assetPath, 1920, 1080) { // TODO: Add a little more intelligence around resolution detection
 			fileSize := file.Size()
 			if _, ok := assetBySize[fileSize]; !ok {
 				assetBySize[fileSize] = make(map[string]string)
 			}
-			assetBySize[fileSize][filePath] = md5String(filepath)
+			assetBySize[fileSize][assetPath] = md5String(assetPath)
+			toBeCopied[assetPath] = true
+			fileName[assetPath] = file.Name()
 			assetsFound++
 		}
 	}
 
 	fmt.Printf("%d Spotlight images found\n", assetsFound)
+	return assetsFound
 }
 
 func md5String(filePath string) string {
@@ -74,8 +88,15 @@ func isWallpaper(filePath string, width, height int) bool {
 	defer asset.Close()
 
 	image, err := jpeg.DecodeConfig(asset)
-	if err != nil {
-		return false // Not a JPEG, so not interested in it
+	if err == nil {
+		fileExt[filePath] = "jpg"
+	} else {
+		image, err = png.DecodeConfig(asset)
+		if err == nil {
+			fileExt[filePath] = "png"
+		} else {
+			return false // Neither a JPEG nor a PNG, so not interested in it
+		}
 	}
 
 	if image.Width != width || image.Height != height {
@@ -85,7 +106,7 @@ func isWallpaper(filePath string, width, height int) bool {
 	return true
 }
 
-func scanExisting(targetPath string) {
+func scanExisting(targetPath string) int {
 	wpFound := 0
 	matchesFound := 0
 	files, err := ioutil.ReadDir(targetPath)
@@ -96,168 +117,55 @@ func scanExisting(targetPath string) {
 	for _, file := range files {
 		filePath := targetPath + "/" + file.Name()
 		fileSize := file.Size()
+		wpFound++
 		if _, ok := assetBySize[fileSize]; ok {
-			for assetName, assetHash := range assetBySize[fileSize] {
-				wpHash := md5String(filePath)
+			wpHash := md5String(filePath)
+			for assetPath, assetHash := range assetBySize[fileSize] {
+				if wpHash == assetHash {
+					toBeCopied[assetPath] = false
+					matchesFound++
+				}
 			}
 		}
 
 	}
 
-	fmt.Printf("%d Spotlight images found\n", assetsFound)
-
+	fmt.Printf("%d Existing wallpapers found\n", wpFound)
+	fmt.Printf("%d Spotlight assets match existing; skipping\n", matchesFound)
+	return matchesFound
 }
 
-// sub browse_assets {
-//     my $cwd = cwd();
-//     chdir $ASSET_FOLDER;
-//     foreach my $asset (glob q{*}) {
-//         $assets{$asset} = 1;
-//         $IN_ASSETS++;
-//     }
-//     chdir $cwd;
-//     return;
-// }
+func copyNewAssets(targetPath string) int {
+	copied := 0
+	prefix := "ZZZ_Unsorted_"
 
-// #!/perl -w
+	for assetPath, tbc := range toBeCopied {
+		if tbc {
+			newPath := targetPath + "/" + prefix + fileName[assetPath] + "." + fileExt[assetPath]
+			nbytes, err := copyFile(assetPath, newPath)
+			if err == nil {
+				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], targetPath)
+				copied++
+			}
+		}
+	}
 
-// use strict;
-// use warnings;
+	return copied
+}
 
-// use Cwd;
-// use Image::ExifTool;
-// use Digest::SHA qw{ sha256_hex };
-// use File::Copy;
-// use Readonly;
+func copyFile(src, dst string) (int64, error) {
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
 
-// our $VERSION = 0.1;
+	dest, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer dest.Close()
 
-// my $LOCAL = $ENV{LocalAppData};
-// my $ASSET_FOLDER = "$LOCAL/Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets";
-// my $WALLPAPERS = 'C:/_WorkingSVN_/wallpaper/1-screen/win10-spotlight';
-
-// abort("Asset folder not found: $ASSET_FOLDER") unless -d $ASSET_FOLDER;
-// abort("Wallpaper folder not found: $WALLPAPERS") unless -d $WALLPAPERS;
-
-// my %assets = ();
-// my %asset_size = ();
-
-// Readonly my $FILESIZE_INDEX => 7;
-
-// no warnings;    # Suppress "used only once" warning
-// %Image::ExifTool::UserDefined::petesplace = (
-//     GROUPS => { 0 => 'XMP', 1 => 'XMP-petesplace', 2 => 'Image' },
-//     NAMESPACE => { 'petesplace' => 'http://petesplace.id.au' },
-//     WRITABLE => 'string',
-//     BadTimeFlag => {},
-//     );
-// %Image::ExifTool::UserDefined = (
-//       # new XMP namespaces (ie. XMP-xxx) must be added to the Main XMP table:
-//     'Image::ExifTool::XMP::Main' => {
-//         defra => {
-//             SubDirectory => {
-//                 TagTable => 'Image::ExifTool::UserDefined::petesplace'
-//                 },
-//             },
-//         }
-//     );
-// use warnings;
-
-// my ($IN_ASSETS, $WP_ASSETS, $IN_WALLPAPER, $COPY_COUNT) = (0, 0, 0, 0);
-// exit;
-
-// #################################################################
-
-// sub identify_wp_sized {
-//     $WP_ASSETS = $IN_ASSETS;
-//     foreach my $file (sort keys %assets) {
-//         my $exif = Image::ExifTool::new();
-//         my $tags = $exif->ImageInfo("$ASSET_FOLDER/$file");
-//         my $size = $tags->{ImageSize};
-//         if (!defined $size || $size ne '1920x1080') {
-//             delete $assets{$file};
-//             $WP_ASSETS--;
-//         }
-//     }
-//     return;
-// }
-
-// sub compare_existing {
-//     my $cwd = cwd();
-//     chdir $WALLPAPERS;
-
-//     my %by_size = ();
-//     foreach my $jpg (glob q{*}) {
-//         my $size = (stat $jpg)[$FILESIZE_INDEX];
-//         $by_size{$size}{files}{$jpg} = 1;
-//         $by_size{$size}{flag} = 1;
-//         $IN_WALLPAPER++;
-//     }
-
-//     foreach my $asset (sort keys %assets) {
-//         my $size = (stat "$ASSET_FOLDER/$asset")[$FILESIZE_INDEX];
-//         if (defined $by_size{$size}{flag}) {
-//             foreach my $jpg (sort keys %{$by_size{$size}{files}}) {
-//                 if (compare_images($jpg,"$ASSET_FOLDER/$asset")) {
-//                     delete $assets{$asset};
-//                 }
-//             }
-//         }
-//     }
-//     return;
-// }
-
-// sub compare_images {
-//     my ($file1,$file2) = @_;
-//     open my $FH1,'<',$file1  || return 0;
-//     open my $FH2,'<',$file2  || return 0;
-//     binmode $FH1 ;
-//     binmode $FH2 ;
-//     my $rv = 1;
-//     Readonly my $BLOCKSIZE => 8192;
-//     my ($block1, $block2);
-//     while ($rv && read $FH1, $block1, $BLOCKSIZE) {
-//         read $FH2, $block2, $BLOCKSIZE;
-//         $rv = (sha256_hex($block1) eq sha256_hex($block2));
-//         }
-//     close $FH1;
-//     close $FH2;
-//     return $rv;
-//     }
-
-// sub copy_new_images {
-//     foreach my $asset (sort keys %assets) {
-//         my $src = "$ASSET_FOLDER/$asset";
-//         my $trg = "$WALLPAPERS/ZZZ_Unsorted_$asset.jpg";
-//         print "Copying to $trg\n";
-//         print "OOPS: $src does not exist\n" unless -f $src;
-//         copy($src, $trg);
-//         if (-f $trg) {
-//             $COPY_COUNT++;
-//         } else {
-//             print "NOT COPIED: $trg\n" unless -f $trg;
-//         }
-//     }
-//     return;
-// }
-
-// sub summary {
-//     print "\n";
-//     print "Identified $WP_ASSETS HD Wallpapers (of $IN_ASSETS files)\n";
-//     print "Compared with $IN_WALLPAPER existing Spotlight Wallpapers\n";
-//     print "Copied $COPY_COUNT files which did not already exist\n";
-// }
-
-// sub pause {
-//     my ($msg) = @_;
-//     $msg //= 'Press [Enter] to continue...';
-
-//     print "$msg\n";
-//     <STDIN>;
-// }
-
-// sub abort {
-//     my ($msg) = @_;
-//     pause($msg);
-//     die $msg;
-//     }
+	nbytes, err := io.Copy(dest, source)
+	return nbytes, err
+}
