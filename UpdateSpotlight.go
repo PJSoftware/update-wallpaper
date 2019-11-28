@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+
+	"./spotlight"
 )
 
 const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
@@ -17,26 +19,34 @@ const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2t
 var localAppData = os.Getenv("LOCALAPPDATA")
 var sourcePath = localAppData + "/" + sourceFolder
 
-// TODO: Read paths, etc from INI file
-const targetFolder = "C:/Wallpaper"
-
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
 var fileName map[string]string // Let's cache the filenames so we don't need to re-extract
 var fileExt map[string]string
 
 func main() {
-	found := browseAssets(sourcePath)
-	dups := scanExisting(targetFolder)
+	logFile, err := os.OpenFile("UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logFile.Close()
+	log.SetOutput(logFile)
+
+	var config spotlight.Config
+	config.Init()
+
+	found := browseAssets(sourcePath, config.Width, config.Height)
+	total, dups := scanExisting(config.TargetPath)
 
 	copied := 0
 	if found > dups {
-		copied = copyNewAssets(targetFolder)
+		copied = copyNewAssets(config.TargetPath)
 	}
 	fmt.Printf("%d new images copied\n", copied)
+	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
 }
 
-func browseAssets(sourcePath string) int {
+func browseAssets(sourcePath string, width, height int) int {
 	assetsFound := 0
 	files, err := ioutil.ReadDir(sourcePath)
 	if err != nil {
@@ -50,7 +60,7 @@ func browseAssets(sourcePath string) int {
 
 	for _, file := range files {
 		assetPath := sourcePath + "/" + file.Name()
-		if isWallpaper(assetPath, 1920, 1080) { // TODO: Add a little more intelligence around resolution detection
+		if isWallpaper(assetPath, width, height) {
 			fileSize := file.Size()
 			if _, ok := assetBySize[fileSize]; !ok {
 				assetBySize[fileSize] = make(map[string]string)
@@ -106,7 +116,7 @@ func isWallpaper(filePath string, width, height int) bool {
 	return true
 }
 
-func scanExisting(targetPath string) int {
+func scanExisting(targetPath string) (int, int) {
 	wpFound := 0
 	matchesFound := 0
 	files, err := ioutil.ReadDir(targetPath)
@@ -132,7 +142,7 @@ func scanExisting(targetPath string) int {
 
 	fmt.Printf("%d Existing wallpapers found\n", wpFound)
 	fmt.Printf("%d Spotlight assets match existing; skipping\n", matchesFound)
-	return matchesFound
+	return wpFound, matchesFound
 }
 
 func copyNewAssets(targetPath string) int {
