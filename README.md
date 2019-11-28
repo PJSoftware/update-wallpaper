@@ -2,18 +2,26 @@
 Automate copying of Windows Spotlight images into Wallpaper Folder
 
 The task is simple:
-* Look in the deeply nested Assets folder.
+* Look in the predefined Assets folder.
 * Examine all files therein.
 * Identify which ones are actually JPGs.
 * Filter to only include the wallpaper-sized photos.
 * Compare these with the ones already in the Wallpaper folder.
 * Copy across the ones we don't already have.
 
-## Lessons Learned
-Based on my testing of this on a whole two machines, one at 1920x1080 and one at 2560x1080, I am concluding that the service only delivers 1920x1080 images. However, YMMV.
+**UpdateSpotlight.exe** reads its configuration from the **UpdateSpotlight.ini** file which looks as follows:
 
-From reading I have done elsewhere, it will apparently match the images to your desktop resolution--but it seems it only looks at height.
+    [Spotlight]
 
-Either way, it *does* seem to provide both Portrait and Landscape versions of the images.
+    # The resolution of image that we are interested in (Width x Height)
+    ImageWidth = 1920
+    ImageHeight = 1080
 
-Also, I have only ever found JPG images, but apparently it will also deliver PNG files. At the moment my code specifically only looks for JPGs. That may change.
+    # This is where the Spotlight images should be delivered
+    DestinationFolder = C:\Wallpaper
+
+If the INI file is not found by the program, it will default to using the above values.
+
+The program was developed and tested on two computers, one with a screen resolution of 1920x1080, one with 2560x1080. In both cases, Spotlight delivered 1920x1080 images (and 1080x1920 Portrait variants.) It is possible that your system may be receiving different resolution images, in which case you will need to modify the **ImageWidth** and **ImageHeight** values to match your requirements.
+
+**DestinationFolder** determines where the Spotlight assets, renamed to JPG (or PNG) files, should be placed. **UpdateSpotlight** does not merely look at filenames when determining whether an incoming Spotlight image already exists, so it is safe to rename them if required; currently, any new Spotlight images will have a "ZZZ_Unsorted_" prefix added to their filename to simplify any renaming you might wish to do. If you require the ability to customise this prefix, let me know and I shall place it in the INI file.
