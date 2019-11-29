@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"./spotlight"
 )
@@ -25,7 +26,8 @@ var fileName map[string]string // Let's cache the filenames so we don't need to 
 var fileExt map[string]string
 
 func main() {
-	logFile, err := os.OpenFile("UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
+	exePath := getEXEFolder()
+	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,14 +35,14 @@ func main() {
 	log.SetOutput(logFile)
 
 	var config spotlight.Config
-	config.Init()
+	config.Init(exePath)
 
 	found := browseAssets(sourcePath, config.Width, config.Height)
 	total, dups := scanExisting(config.TargetPath)
 
 	copied := 0
 	if found > dups {
-		copied = copyNewAssets(config.TargetPath)
+		copied = copyNewAssets(config.TargetPath, config.Prefix)
 	}
 	fmt.Printf("%d new images copied\n", copied)
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
@@ -145,9 +147,8 @@ func scanExisting(targetPath string) (int, int) {
 	return wpFound, matchesFound
 }
 
-func copyNewAssets(targetPath string) int {
+func copyNewAssets(targetPath, prefix string) int {
 	copied := 0
-	prefix := "ZZZ_Unsorted_"
 
 	for assetPath, tbc := range toBeCopied {
 		if tbc {
@@ -178,4 +179,16 @@ func copyFile(src, dst string) (int64, error) {
 
 	nbytes, err := io.Copy(dest, source)
 	return nbytes, err
+}
+
+func getEXEFolder() string {
+	exeFilename := os.Args[0]
+	exeFolder := filepath.Dir(exeFilename)
+	exeAbsFolder, err := filepath.Abs(exeFolder)
+	if err != nil {
+		log.Printf("Unable to determine EXE folder: %v", err)
+		return ""
+	}
+
+	return exeAbsFolder + "\\"
 }

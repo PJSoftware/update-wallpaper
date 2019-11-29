@@ -8,13 +8,15 @@ import (
 type Config struct {
 	Width, Height int
 	TargetPath    string
+	Prefix        string
 	iniFile       INI
 }
 
 // Init sets values to those from ini file, or to defaults if an error occurs
-func (s *Config) Init() {
+func (s *Config) Init(exePath string) {
 	s.setDefaults()
-	err := s.iniFile.Parse("UpdateSpotlight.ini")
+
+	err := s.iniFile.Parse(exePath + "UpdateSpotlight.ini")
 	if err != nil {
 		log.Print("world.Init: Error reading INI file: " + err.Error())
 		log.Print("world.Init: using Default parameters instead")
@@ -31,6 +33,7 @@ func (s *Config) Init() {
 	s.readWidth(section)
 	s.readHeight(section)
 	s.readPath(section)
+	s.readPrefix(section)
 }
 
 func (s *Config) readWidth(sectName string) {
@@ -66,9 +69,21 @@ func (s *Config) readPath(sectName string) {
 	}
 }
 
+func (s *Config) readPrefix(sectName string) {
+	key := "Prefix"
+	val, err := s.iniFile.Value(sectName, key)
+	if err == nil {
+		s.TargetPath = val
+	} else {
+		log.Print(err.Error())
+		log.Printf("Config: %s not found, using default", key)
+	}
+}
+
 func (s *Config) setDefaults() {
 	// I believe Spotlight delivers 1920x1080 by default anyway
 	s.Width = 1920
 	s.Height = 1080
 	s.TargetPath = "C:\\Wallpaper"
+	s.Prefix = "ZZZ_Unsorted_"
 }
