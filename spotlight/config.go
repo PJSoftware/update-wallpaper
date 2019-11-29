@@ -73,7 +73,7 @@ func (s *Config) readPrefix(sectName string) {
 	key := "Prefix"
 	val, err := s.iniFile.Value(sectName, key)
 	if err == nil {
-		s.TargetPath = val
+		s.Prefix = val
 	} else {
 		log.Print(err.Error())
 		log.Printf("Config: %s not found, using default", key)
