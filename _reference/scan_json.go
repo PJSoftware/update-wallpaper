@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 func main() {
@@ -12,13 +13,17 @@ func main() {
 
 	// panic("ABORTED")
 
-	data, err := readJSON("image.json")
+	// data, _ := readJSON("1575410587")
+	data, _ := readJSON("non-image.json")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	var result map[string]interface{}
+	err := json.Unmarshal(data, &result)
 	if err != nil {
 		panic(err)
 	}
-
-	var result map[string]interface{}
-	json.Unmarshal(data, &result)
 
 	batchRSP := result["batchrsp"].(map[string]interface{})
 	items := batchRSP["items"].([]interface{})
@@ -41,10 +46,31 @@ func main() {
 }
 
 func readJSON(fileName string) ([]byte, error) {
-	data, err := ioutil.ReadFile(fileName)
+	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("%s: %d bytes read\n", fileName, len(data))
+
+	// if utf8.Valid(data) {
+	// 	fmt.Printf("%s is valid UTF8\n", fileName)
+	// } else {
+	// 	fmt.Printf("%s is NOT valid UTF8\n", fileName)
+
+	// 	runes := []rune(string(data))
+	// 	data = []byte(string(runes))
+
+	// 	if utf8.Valid(data) {
+	// 		fmt.Printf("%s is noW valid UTF8\n", fileName)
+	// 	}
+	// }
 
 	if !json.Valid(data) {
 		return nil, fmt.Errorf("Specified file does not contain valid JSON")
