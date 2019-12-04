@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	data, err := readJSON("1575245198.json")
+	data, err := readJSON("image.json")
 	if err != nil {
 		panic(err)
 	}
@@ -29,8 +29,8 @@ func main() {
 
 		adObj := itemMap["ad"].(map[string]interface{})
 		fmt.Printf("'ad' subMap:\n\n")
-		for key, item := range adObj {
-			fmt.Printf("%s: %v\n\n", key, item)
+		for key, val := range adObj {
+			fmt.Printf("%s: %v\n\n", key, val)
 		}
 	}
 }
