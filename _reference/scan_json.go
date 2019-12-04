@@ -7,7 +7,12 @@ import (
 )
 
 func main() {
-	data, err := readJSON("image.json")
+	// metadata := new(spotlight.MetaData)
+	// metadata.ImportAll()
+
+	// panic("ABORTED")
+
+	data, err := readJSON("orig.json")
 	if err != nil {
 		panic(err)
 	}
@@ -48,17 +53,17 @@ func readJSON(fileName string) ([]byte, error) {
 	return data, nil
 }
 
-// func checkErr(err error) {
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
+func checkErr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
-// func readFile(filePath string) []byte {
-// 	data, err := ioutil.ReadFile(filePath)
-// 	checkErr(err)
-// 	return data
-// }
+func readFile(filePath string) []byte {
+	data, err := ioutil.ReadFile(filePath)
+	checkErr(err)
+	return data
+}
 
 // func main() {
 // 	path := "1575245198.json"
