@@ -12,7 +12,7 @@ func main() {
 
 	// panic("ABORTED")
 
-	data, err := readJSON("1575410587")
+	data, err := readJSON("image.json")
 	if err != nil {
 		panic(err)
 	}
