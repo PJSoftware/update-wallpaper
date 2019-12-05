@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"./spotlight"
 )
@@ -23,9 +24,13 @@ var sourcePath = localAppData + "/" + sourceFolder
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
 var fileName map[string]string // Let's cache the filenames so we don't need to re-extract
+var photoData map[string]map[string]string
 var fileExt map[string]string
 
 func main() {
+	metadata := new(spotlight.MetaData)
+	metadata.ImportAll()
+
 	exePath := getEXEFolder()
 	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -37,7 +42,7 @@ func main() {
 	var config spotlight.Config
 	config.Init(exePath)
 
-	found := browseAssets(sourcePath, config.Width, config.Height)
+	found := browseAssets(sourcePath, config.Width, config.Height, metadata)
 	total, dups := scanExisting(config.TargetPath)
 
 	copied := 0
@@ -48,7 +53,7 @@ func main() {
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
 }
 
-func browseAssets(sourcePath string, width, height int) int {
+func browseAssets(sourcePath string, width, height int, metadata *spotlight.MetaData) int {
 	assetsFound := 0
 	files, err := ioutil.ReadDir(sourcePath)
 	if err != nil {
@@ -59,6 +64,7 @@ func browseAssets(sourcePath string, width, height int) int {
 	toBeCopied = make(map[string]bool)
 	fileName = make(map[string]string)
 	fileExt = make(map[string]string)
+	photoData = make(map[string]map[string]string)
 
 	for _, file := range files {
 		assetPath := sourcePath + "/" + file.Name()
@@ -70,6 +76,17 @@ func browseAssets(sourcePath string, width, height int) int {
 			assetBySize[fileSize][assetPath] = md5String(assetPath)
 			toBeCopied[assetPath] = true
 			fileName[assetPath] = file.Name()
+			for _, image := range metadata.Images {
+				if image.FileSize() == fileSize {
+					// the chances of anything coming from Mars are a million to one
+					// the chances of there being two images of this filesize are miniscule
+					// however, death rays etc! So:
+					// TODO: we need to look at comparing with sha256 value too
+					photoData[assetPath] = make(map[string]string)
+					photoData[assetPath]["copyright"] = image.Copyright()
+					photoData[assetPath]["description"] = image.Description()
+				}
+			}
 			assetsFound++
 		}
 	}
@@ -152,11 +169,33 @@ func copyNewAssets(targetPath, prefix string) int {
 
 	for assetPath, tbc := range toBeCopied {
 		if tbc {
-			newPath := targetPath + "/" + prefix + fileName[assetPath] + "." + fileExt[assetPath]
+			newPath := targetPath + "/" + prefix
+			newName := fileName[assetPath]
+			if _, ok := photoData[assetPath]; ok {
+				newName = photoData[assetPath]["description"] + " -- "
+				re := regexp.MustCompile(` *[/|].*$`)
+				newName += re.ReplaceAllString(photoData[assetPath]["copyright"], "")
+
+				re = regexp.MustCompile(`[^- a-zA-Z0-9,]+`)
+				newName = re.ReplaceAllString(newName, " ")
+
+				re = regexp.MustCompile(` +`)
+				newName = re.ReplaceAllString(newName, " ")
+
+				re = regexp.MustCompile(`^ +`)
+				newName = re.ReplaceAllString(newName, "")
+
+				re = regexp.MustCompile(` +$`)
+				newName = re.ReplaceAllString(newName, "")
+			}
+			newName += "." + fileExt[assetPath]
+			newPath += newName
 			nbytes, err := copyFile(assetPath, newPath)
 			if err == nil {
-				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], targetPath)
+				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], newName)
 				copied++
+			} else {
+				fmt.Printf("Error copying file: %v\n", err)
 			}
 		}
 	}
