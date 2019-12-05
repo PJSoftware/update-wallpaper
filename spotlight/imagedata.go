@@ -11,3 +11,18 @@ type ImageData struct {
 	description   string
 	metadataSrc   string
 }
+
+// FileSize returns the file size of the image
+func (id *ImageData) FileSize() int64 {
+	return id.fileSize
+}
+
+// Description returns the image description
+func (id *ImageData) Description() string {
+	return id.description
+}
+
+// Copyright returns the image copyright information
+func (id *ImageData) Copyright() string {
+	return id.copyright
+}

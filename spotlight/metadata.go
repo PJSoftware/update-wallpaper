@@ -13,7 +13,7 @@ import (
 type MetaData struct {
 	size       int
 	currentIdx int
-	image      []ImageData
+	Images     []ImageData
 }
 
 // ImportAll is the entrypoint to all MetaData; it reads all relevant files
@@ -130,11 +130,7 @@ func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
 
 		m.size++
 		m.currentIdx = m.size - 1
-		m.image = append(m.image, image)
-
-		fmt.Printf("From '%s':\n", src)
-		fmt.Printf("  %s: %d x %d; %d bytes\n", image.url, image.width, image.height, image.fileSize)
-		fmt.Printf("  '%s' by '%s'\n", image.description, image.copyright)
+		m.Images = append(m.Images, image)
 	}
 }
 
