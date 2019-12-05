@@ -3,7 +3,6 @@ package spotlight
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -30,8 +29,8 @@ func (m *MetaData) ImportAll() {
 			if info.Mode().IsRegular() {
 				match, _ := regexp.MatchString(`[\\/]\d+[\\/]\d+$`, path) // vs "[\\\\/]\\d+[\\\\/]\\d+$"
 				if match {
-					for _, jsonItem := range jsonItems(path) {
-						m.parseJSON(jsonItem)
+					for _, jsonItem := range jsonItemsFromFile(path) {
+						m.parseJSON(jsonItem, path)
 					}
 				}
 			}
@@ -46,21 +45,18 @@ func (m *MetaData) ImportAll() {
 
 }
 
-// readJSON attempts to open specified file, returns contents if valid json
-func jsonItems(fileName string) []map[string]interface{} {
-	fmt.Printf("Extracting JSON items from %s\n", fileName)
+// jsonItemsFromFile returns a slice of relevant Spotlight JSON items if found in file
+func jsonItemsFromFile(fileName string) []map[string]interface{} {
 	var rv []map[string]interface{}
 
-	rawData, err := ioutil.ReadFile(fileName)
+	rawData, err := ReadUTF16(fileName)
 	if err != nil {
 		return nil // Just skip file if we have trouble reading it
 	}
-	fmt.Printf("* successfully read file: %d bytes\n", len(rawData))
 
 	if !json.Valid(rawData) {
 		return nil
 	}
-	fmt.Println("* file is valid JSON")
 
 	var jsonData map[string]interface{}
 	json.Unmarshal(rawData, &jsonData)
@@ -69,39 +65,44 @@ func jsonItems(fileName string) []map[string]interface{} {
 		return nil
 	}
 	batchRSP := jsonData["batchrsp"].(map[string]interface{})
-	fmt.Println("* batchRSP")
 
 	if _, ok := batchRSP["items"]; !ok {
 		return nil
 	}
 	items := batchRSP["items"].([]interface{})
-	fmt.Println("* items")
 
 	for _, obj := range items {
 		itemObj := obj.(map[string]interface{})
 		if _, ok := itemObj["item"]; !ok {
-			return nil
+			continue
 		}
 		itemStr := itemObj["item"]
 		itemBytes := []byte(itemStr.(string))
 
 		var itemMap map[string]interface{}
-		fmt.Println(" > itemMap")
-		json.Unmarshal(itemBytes, &itemMap)
+
+		if !json.Valid(itemBytes) {
+			continue
+		}
+
+		err := json.Unmarshal(itemBytes, &itemMap)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 
 		if _, ok := itemMap["ad"]; !ok {
-			return nil
+			continue
 		}
 		adObj := itemMap["ad"].(map[string]interface{})
 
 		if _, ok := adObj["name"]; !ok {
-			return nil
+			continue
 		}
 		if adObj["name"] != "LockScreen" {
-			return nil
+			continue
 		}
 
-		fmt.Printf("  item found!\n")
 		rv = append(rv, adObj)
 	}
 
@@ -109,7 +110,7 @@ func jsonItems(fileName string) []map[string]interface{} {
 }
 
 // read
-func (m *MetaData) parseJSON(data map[string]interface{}) {
+func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
 	if _, ok := data["properties"]; !ok {
 		return
 	}
@@ -120,14 +121,20 @@ func (m *MetaData) parseJSON(data map[string]interface{}) {
 	var image ImageData
 
 	pOK := parseProperties(data["properties"].(map[string]interface{}), &image)
-	iOK := parseItems(data["items"].(map[string]interface{}), &image)
+
+	item := data["items"].([]interface{})
+	iOK := parseItems(item[0].(map[string]interface{}), &image)
 
 	if pOK && iOK {
+		image.metadataSrc = src
+
 		m.size++
 		m.currentIdx = m.size - 1
 		m.image = append(m.image, image)
 
-		fmt.Printf("%s: %s x %s; %s\n", image.url, image.width, image.height, image.fileSize)
+		fmt.Printf("From '%s':\n", src)
+		fmt.Printf("  %s: %d x %d; %d bytes\n", image.url, image.width, image.height, image.fileSize)
+		fmt.Printf("  '%s' by '%s'\n", image.description, image.copyright)
 	}
 }
 
@@ -137,51 +144,48 @@ func parseProperties(prop map[string]interface{}, image *ImageData) bool {
 	}
 	landscape := prop["landscapeImage"].(map[string]interface{})
 
-	var ok bool
-	if image.fileSize, ok = landscape["fileSize"].(string); !ok {
-		return false
-	}
-	if image.height, ok = landscape["height"].(string); !ok {
-		return false
-	}
-	if image.width, ok = landscape["width"].(string); !ok {
-		return false
-	}
-	if image.sha256, ok = landscape["sha256"].(string); !ok {
-		return false
-	}
-	if image.url, ok = landscape["image"].(string); !ok {
-		return false
-	}
+	image.fileSize = int64(float64From(landscape, "fileSize"))
+	image.height = int64(float64From(landscape, "height"))
+	image.width = int64(float64From(landscape, "width"))
+	image.sha256 = stringFrom(landscape, "sha256")
+	image.url = stringFrom(landscape, "image")
 
-	return true
+	return image.fileSize > 0
 }
 
 func parseItems(item map[string]interface{}, image *ImageData) bool {
 	var ok bool
-	if image.entityID, ok = item["entityID"].(string); !ok {
-		return false
-	}
 
 	var prop, copyright, desc map[string]interface{}
-
 	if prop, ok = item["properties"].(map[string]interface{}); !ok {
 		return false
 	}
-
 	if copyright, ok = prop["copyright"].(map[string]interface{}); !ok {
 		return false
 	}
-	if image.copyright, ok = copyright["text"].(string); !ok {
-		return false
-	}
-
 	if desc, ok = prop["description"].(map[string]interface{}); !ok {
 		return false
 	}
-	if image.description, ok = desc["text"].(string); !ok {
-		return false
-	}
 
-	return true
+	image.entityID = stringFrom(item, "entityId")
+	image.copyright = stringFrom(copyright, "text")
+	image.description = stringFrom(desc, "text")
+
+	return image.description != ""
+}
+
+func float64From(dat map[string]interface{}, key string) float64 {
+	rv, ok := dat[key]
+	if ok {
+		return rv.(float64)
+	}
+	return 0.0
+}
+
+func stringFrom(dat map[string]interface{}, key string) string {
+	rv, ok := dat[key]
+	if ok {
+		return rv.(string)
+	}
+	return ""
 }
