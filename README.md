@@ -21,7 +21,7 @@ The task is simple:
     DestinationFolder = C:\Wallpaper
     
     # Spotlight images copied into above folder wil have Prefix added to their name
-    Prefix = ZZZ_Unsorted_
+    Prefix = ZZZ_Unsorted-
 
 If the INI file is not found by the program, it will default to using the above values.
 
