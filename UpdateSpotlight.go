@@ -26,6 +26,9 @@ var fileName map[string]string // Let's cache the filenames so we don't need to 
 var fileExt map[string]string
 
 func main() {
+	metadata := new(spotlight.MetaData)
+	metadata.ImportAll()
+
 	exePath := getEXEFolder()
 	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
