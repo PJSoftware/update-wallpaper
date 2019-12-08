@@ -167,7 +167,6 @@ func parseItems(item map[string]interface{}, image *ImageData) bool {
 	image.copyright = stringFrom(copyright, "text")
 	image.description = stringFrom(desc, "text")
 
-	log.Printf("Found metadata: %s -> %s", image.description, image.copyright)
 	return image.description != ""
 }
 

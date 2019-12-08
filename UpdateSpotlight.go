@@ -179,12 +179,12 @@ func copyNewAssets(targetPath, prefix string) int {
 				desc := photoData[assetPath]["description"]
 				cr := photoData[assetPath]["copyright"]
 				newName = newFilename(desc, cr)
-				log.Printf("New image: %s by %s -> %s", desc, cr, newName)
 			}
 			newName += "." + fileExt[assetPath]
 			newPath += newName
 			nbytes, err := copyFile(assetPath, newPath)
 			if err == nil {
+				log.Printf("New image: %s (copied from %s)", newName, fileName[assetPath])
 				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], newName)
 				copied++
 			} else {
