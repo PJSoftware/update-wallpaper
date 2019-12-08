@@ -28,9 +28,7 @@ var photoData map[string]map[string]string
 var fileExt map[string]string
 
 func main() {
-	metadata := new(spotlight.MetaData)
-	metadata.ImportAll()
-
+	// First determine exepath and set LOG file location
 	exePath := getEXEFolder()
 	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -41,6 +39,9 @@ func main() {
 
 	var config spotlight.Config
 	config.Init(exePath)
+
+	metadata := new(spotlight.MetaData)
+	metadata.ImportAll()
 
 	found := browseAssets(sourcePath, config.Width, config.Height, metadata)
 	total, dups := scanExisting(config.TargetPath)
@@ -172,6 +173,12 @@ func copyNewAssets(targetPath, prefix string) int {
 			newPath := targetPath + "/" + prefix
 			newName := fileName[assetPath]
 			if _, ok := photoData[assetPath]; ok {
+				// TODO: Take a closer look at our code to strip out invalid characters
+				// Currently it is far too simplistic, and stripping out more than it should
+				// Examples:
+				//    'Grundarfjörður' was converted to 'Grundarfj r ur'
+				//    'Kjölur' was converted to 'Kj lur'
+				log.Printf("New image: %s (%s)", photoData[assetPath]["description"], photoData[assetPath]["copyright"])
 				newName = photoData[assetPath]["description"] + " -- "
 				re := regexp.MustCompile(` *[/|].*$`)
 				newName += re.ReplaceAllString(photoData[assetPath]["copyright"], "")
@@ -187,6 +194,7 @@ func copyNewAssets(targetPath, prefix string) int {
 
 				re = regexp.MustCompile(` +$`)
 				newName = re.ReplaceAllString(newName, "")
+				log.Printf("Geneated filename: %s", newName)
 			}
 			newName += "." + fileExt[assetPath]
 			newPath += newName
