@@ -1,7 +1,9 @@
 # Win-Spotlight
+
 Automate copying of Windows Spotlight images into Wallpaper Folder
 
 The task is simple:
+
 * Look in the predefined Assets folder.
 * Examine all files therein.
 * Identify which ones are actually JPGs.

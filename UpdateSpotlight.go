@@ -12,10 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"./spotlight"
 )
 
+const version = "1.2"
 const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
 
 var localAppData = os.Getenv("LOCALAPPDATA")
@@ -28,9 +30,8 @@ var photoData map[string]map[string]string
 var fileExt map[string]string
 
 func main() {
-	metadata := new(spotlight.MetaData)
-	metadata.ImportAll()
-
+	fmt.Printf("UpdateSpotlight v%s -- by PJSoftware\n", version)
+	// First determine exepath and set LOG file location
 	exePath := getEXEFolder()
 	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -41,6 +42,9 @@ func main() {
 
 	var config spotlight.Config
 	config.Init(exePath)
+
+	metadata := new(spotlight.MetaData)
+	metadata.ImportAll()
 
 	found := browseAssets(sourcePath, config.Width, config.Height, metadata)
 	total, dups := scanExisting(config.TargetPath)
@@ -172,26 +176,15 @@ func copyNewAssets(targetPath, prefix string) int {
 			newPath := targetPath + "/" + prefix
 			newName := fileName[assetPath]
 			if _, ok := photoData[assetPath]; ok {
-				newName = photoData[assetPath]["description"] + " -- "
-				re := regexp.MustCompile(` *[/|].*$`)
-				newName += re.ReplaceAllString(photoData[assetPath]["copyright"], "")
-
-				re = regexp.MustCompile(`[^- a-zA-Z0-9,]+`)
-				newName = re.ReplaceAllString(newName, " ")
-
-				re = regexp.MustCompile(` +`)
-				newName = re.ReplaceAllString(newName, " ")
-
-				re = regexp.MustCompile(`^ +`)
-				newName = re.ReplaceAllString(newName, "")
-
-				re = regexp.MustCompile(` +$`)
-				newName = re.ReplaceAllString(newName, "")
+				desc := photoData[assetPath]["description"]
+				cr := photoData[assetPath]["copyright"]
+				newName = newFilename(desc, cr)
 			}
 			newName += "." + fileExt[assetPath]
 			newPath += newName
 			nbytes, err := copyFile(assetPath, newPath)
 			if err == nil {
+				log.Printf("New image: %s (copied from %s)", newName, fileName[assetPath])
 				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], newName)
 				copied++
 			} else {
@@ -201,6 +194,26 @@ func copyNewAssets(targetPath, prefix string) int {
 	}
 
 	return copied
+}
+
+func newFilename(desc, cr string) string {
+	re := regexp.MustCompile(` *[<>:"/\|?*]+ *`)
+	desc = re.ReplaceAllString(desc, " + ")
+	cr = re.ReplaceAllString(cr, " + ")
+
+	re = regexp.MustCompile(` +`)
+	desc = re.ReplaceAllString(desc, " ")
+	cr = re.ReplaceAllString(cr, " ")
+
+	desc = strings.TrimSpace(desc)
+	cr = strings.TrimSpace(cr)
+
+	hasSym, _ := regexp.MatchString(`^© `, cr)
+	if !hasSym {
+		cr = "© " + cr
+	}
+
+	return desc + " " + cr
 }
 
 func copyFile(src, dst string) (int64, error) {

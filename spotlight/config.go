@@ -85,5 +85,5 @@ func (s *Config) setDefaults() {
 	s.Width = 1920
 	s.Height = 1080
 	s.TargetPath = "C:\\Wallpaper"
-	s.Prefix = "ZZZ_Unsorted_"
+	s.Prefix = ""
 }
