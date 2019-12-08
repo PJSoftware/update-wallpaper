@@ -12,10 +12,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"./spotlight"
 )
 
+const version = "1.2"
 const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
 
 var localAppData = os.Getenv("LOCALAPPDATA")
@@ -28,6 +30,7 @@ var photoData map[string]map[string]string
 var fileExt map[string]string
 
 func main() {
+	fmt.Printf("UpdateSpotlight v%s -- by PJSoftware\n", version)
 	// First determine exepath and set LOG file location
 	exePath := getEXEFolder()
 	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
@@ -173,28 +176,10 @@ func copyNewAssets(targetPath, prefix string) int {
 			newPath := targetPath + "/" + prefix
 			newName := fileName[assetPath]
 			if _, ok := photoData[assetPath]; ok {
-				// TODO: Take a closer look at our code to strip out invalid characters
-				// Currently it is far too simplistic, and stripping out more than it should
-				// Examples:
-				//    'Grundarfjörður' was converted to 'Grundarfj r ur'
-				//    'Kjölur' was converted to 'Kj lur'
-				log.Printf("New image: %s (%s)", photoData[assetPath]["description"], photoData[assetPath]["copyright"])
-				newName = photoData[assetPath]["description"] + " -- "
-				re := regexp.MustCompile(` *[/|].*$`)
-				newName += re.ReplaceAllString(photoData[assetPath]["copyright"], "")
-
-				re = regexp.MustCompile(`[^- a-zA-Z0-9,]+`)
-				newName = re.ReplaceAllString(newName, " ")
-
-				re = regexp.MustCompile(` +`)
-				newName = re.ReplaceAllString(newName, " ")
-
-				re = regexp.MustCompile(`^ +`)
-				newName = re.ReplaceAllString(newName, "")
-
-				re = regexp.MustCompile(` +$`)
-				newName = re.ReplaceAllString(newName, "")
-				log.Printf("Geneated filename: %s", newName)
+				desc := photoData[assetPath]["description"]
+				cr := photoData[assetPath]["copyright"]
+				newName = newFilename(desc, cr)
+				log.Printf("New image: %s by %s -> %s", desc, cr, newName)
 			}
 			newName += "." + fileExt[assetPath]
 			newPath += newName
@@ -209,6 +194,26 @@ func copyNewAssets(targetPath, prefix string) int {
 	}
 
 	return copied
+}
+
+func newFilename(desc, cr string) string {
+	re := regexp.MustCompile(` *[<>:"/\|?*]+ *`)
+	desc = re.ReplaceAllString(desc, " + ")
+	cr = re.ReplaceAllString(cr, " + ")
+
+	re = regexp.MustCompile(` +`)
+	desc = re.ReplaceAllString(desc, " ")
+	cr = re.ReplaceAllString(cr, " ")
+
+	desc = strings.TrimSpace(desc)
+	cr = strings.TrimSpace(cr)
+
+	hasSym, _ := regexp.MatchString(`^© `, cr)
+	if !hasSym {
+		cr = "© " + cr
+	}
+
+	return desc + " " + cr
 }
 
 func copyFile(src, dst string) (int64, error) {
