@@ -10,7 +10,7 @@ import (
 )
 
 // TODO: When reading INI file, we should log if no INI found, but not if a particular value
-// 		 is missing. It is common for values to be commented out of INI files when the 
+// 		 is missing. It is common for values to be commented out of INI files when the
 //		 default is to be used!
 
 // TODO: Perhaps the calling code needs the ability to specifically state the default value
@@ -18,6 +18,8 @@ import (
 //       code should CREATE an INI with the default values?
 
 // TODO: Add support for blank/empty values
+
+// TODO: Add support for unnamed sections, or sectionless INI files
 
 // INI object provides interface to an ini file
 type INI struct {
@@ -39,7 +41,7 @@ func (i *INI) Parse(fileName string) error {
 
 	i.fileName = fileName
 	patternSect := `^[[](.+)[]]`
-	patternValue := `^(\S+)\s*=\s*(\S.*)$`
+	patternValue := `^(\S+)=(.*)$`
 	currSect := ""
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
