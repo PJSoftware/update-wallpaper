@@ -9,6 +9,16 @@ import (
 	"strconv"
 )
 
+// TODO: When reading INI file, we should log if no INI found, but not if a particular value
+// 		 is missing. It is common for values to be commented out of INI files when the 
+//		 default is to be used!
+
+// TODO: Perhaps the calling code needs the ability to specifically state the default value
+//       at the point of the call, rather than by a separate call? If no INI -- perhaps the
+//       code should CREATE an INI with the default values?
+
+// TODO: Add support for blank/empty values
+
 // INI object provides interface to an ini file
 type INI struct {
 	section  map[string]bool
