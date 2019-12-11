@@ -2,6 +2,7 @@ package spotlight
 
 import (
 	"log"
+	"../ini"
 )
 
 // Config provides interface to values from ini file
@@ -9,7 +10,7 @@ type Config struct {
 	Width, Height int
 	TargetPath    string
 	Prefix        string
-	iniFile       INI
+	iniFile       ini.INI
 }
 
 // Init sets values to those from ini file, or to defaults if an error occurs

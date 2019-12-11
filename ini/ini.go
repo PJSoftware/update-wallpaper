@@ -1,4 +1,4 @@
-package spotlight
+package ini
 
 import (
 	"bufio"
