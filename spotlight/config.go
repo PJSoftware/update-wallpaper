@@ -2,15 +2,20 @@ package spotlight
 
 import (
 	"log"
+
 	"../ini"
 )
+
+// TODO: When reading INI file, we should log if no INI found, but not if a
+//  particular value is missing. It is common for values to be commented out of
+//  INI files when the default is to be used!
 
 // Config provides interface to values from ini file
 type Config struct {
 	Width, Height int
 	TargetPath    string
 	Prefix        string
-	iniFile       ini.INI
+	iniFile       ini.File
 }
 
 // Init sets values to those from ini file, or to defaults if an error occurs
@@ -24,7 +29,10 @@ func (s *Config) Init(exePath string) {
 		return
 	}
 
-	section := "Spotlight"
+	spotlight := s.iniFile.Section("Spotlight")
+
+	s.Width = spotlight.Value("ImageWidth").AsInt64(1920)
+
 	_, err = s.iniFile.Section(section)
 	if err != nil {
 		log.Printf(err.Error())
