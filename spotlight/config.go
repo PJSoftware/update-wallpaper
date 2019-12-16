@@ -15,13 +15,12 @@ type Config struct {
 	Width, Height int
 	TargetPath    string
 	Prefix        string
+	SmartPrefix   bool
 	iniFile       ini.File
 }
 
 // Init sets values to those from ini file, or to defaults if an error occurs
 func (s *Config) Init(exePath string) {
-	s.setDefaults()
-
 	err := s.iniFile.Parse(exePath + "UpdateSpotlight.ini")
 	if err != nil {
 		log.Print("world.Init: Error reading INI file: " + err.Error())
@@ -29,70 +28,12 @@ func (s *Config) Init(exePath string) {
 		return
 	}
 
-	spotlight := s.iniFile.Section("Spotlight")
+	sectWallpaper := s.iniFile.Section("Wallpaper")
+	s.Width = sectWallpaper.Value("ImageWidth").AsInt(1920)
+	s.Height = sectWallpaper.Value("ImageHeight").AsInt(1080)
+	s.TargetPath = sectWallpaper.Value("DestinationFolder").AsString(`C:\Wallpaper`, false)
 
-	s.Width = spotlight.Value("ImageWidth").AsInt64(1920)
-
-	_, err = s.iniFile.Section(section)
-	if err != nil {
-		log.Printf(err.Error())
-		return
-	}
-
-	s.readWidth(section)
-	s.readHeight(section)
-	s.readPath(section)
-	s.readPrefix(section)
-}
-
-func (s *Config) readWidth(sectName string) {
-	key := "ImageWidth"
-	val, err := s.iniFile.IntValue(sectName, key)
-	if err == nil {
-		s.Width = val
-	} else {
-		log.Print(err.Error())
-		log.Printf("Config: %s not found, using default", key)
-	}
-}
-
-func (s *Config) readHeight(sectName string) {
-	key := "ImageHeight"
-	val, err := s.iniFile.IntValue(sectName, key)
-	if err == nil {
-		s.Height = val
-	} else {
-		log.Print(err.Error())
-		log.Printf("Config: %s not found, using default", key)
-	}
-}
-
-func (s *Config) readPath(sectName string) {
-	key := "DestinationFolder"
-	val, err := s.iniFile.Value(sectName, key)
-	if err == nil {
-		s.TargetPath = val
-	} else {
-		log.Print(err.Error())
-		log.Printf("Config: %s not found, using default", key)
-	}
-}
-
-func (s *Config) readPrefix(sectName string) {
-	key := "Prefix"
-	val, err := s.iniFile.Value(sectName, key)
-	if err == nil {
-		s.Prefix = val
-	} else {
-		log.Print(err.Error())
-		log.Printf("Config: %s not found, using default", key)
-	}
-}
-
-func (s *Config) setDefaults() {
-	// I believe Spotlight delivers 1920x1080 by default anyway
-	s.Width = 1920
-	s.Height = 1080
-	s.TargetPath = "C:\\Wallpaper"
-	s.Prefix = ""
+	sectPrefix := s.iniFile.Section("Prefix")
+	s.Prefix = sectPrefix.Value("Prefix").AsString("ZZZ_Unsorted-", false)
+	s.SmartPrefix = sectPrefix.Value("SmartPrefix").AsBool(true)
 }

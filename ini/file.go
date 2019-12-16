@@ -2,6 +2,7 @@ package ini
 
 import (
 	"bufio"
+	"log"
 	"os"
 	"regexp"
 )
@@ -89,5 +90,9 @@ func (f *File) addSection(sectName string) *Section {
 
 // Section returns named Section object
 func (f *File) Section(sectName string) *Section {
-	return f.sections[sectName]
+	if sect, ok := f.sections[sectName]; ok {
+		return sect
+	}
+	log.Printf("INI.Section: section '%s' not found", sectName)
+	return nil
 }
