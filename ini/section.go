@@ -2,8 +2,6 @@ package ini
 
 import "log"
 
-// TODO: Add support for unnamed sections, or sectionless INI files
-
 // TODO: Add support for merging/ignoring sections
 
 // Section object provides contents of a particular section
@@ -34,4 +32,16 @@ func (s *Section) Value(valName string) *Value {
 	}
 	log.Printf("INI.Section.Value: value '%s' not found", valName)
 	return nil
+}
+
+// Values returns slice of value names
+func (s *Section) Values() []string {
+	keys := make([]string, len(s.values))
+
+	i := 0
+	for key := range s.values {
+		keys[i] = key
+		i++
+	}
+	return keys
 }

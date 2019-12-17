@@ -6,10 +6,6 @@ import (
 	"../ini"
 )
 
-// TODO: When reading INI file, we should log if no INI found, but not if a
-//  particular value is missing. It is common for values to be commented out of
-//  INI files when the default is to be used!
-
 // Config provides interface to values from ini file
 type Config struct {
 	Width, Height int

@@ -96,3 +96,15 @@ func (f *File) Section(sectName string) *Section {
 	log.Printf("INI.Section: section '%s' not found", sectName)
 	return nil
 }
+
+// Sections returns slice of section names
+func (f *File) Sections() []string {
+	keys := make([]string, len(f.sections))
+
+	i := 0
+	for key := range f.sections {
+		keys[i] = key
+		i++
+	}
+	return keys
+}
