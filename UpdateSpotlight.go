@@ -51,7 +51,7 @@ func main() {
 
 	copied := 0
 	if found > dups {
-		copied = copyNewAssets(config.TargetPath, config.Prefix)
+		copied = copyNewAssets(config.TargetPath, config.Prefix, config.SmartPrefix)
 	}
 	fmt.Printf("%d new images copied\n", copied)
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
@@ -168,17 +168,22 @@ func scanExisting(targetPath string) (int, int) {
 	return wpFound, matchesFound
 }
 
-func copyNewAssets(targetPath, prefix string) int {
+func copyNewAssets(targetPath, prefix string, smart bool) int {
 	copied := 0
 
 	for assetPath, tbc := range toBeCopied {
 		if tbc {
-			newPath := targetPath + "/" + prefix
+			newPath := targetPath + "/"
 			newName := fileName[assetPath]
 			if _, ok := photoData[assetPath]; ok {
 				desc := photoData[assetPath]["description"]
 				cr := photoData[assetPath]["copyright"]
 				newName = newFilename(desc, cr)
+				if !smart {
+					newPath += prefix
+				}
+			} else {
+				newPath += prefix
 			}
 			newName += "." + fileExt[assetPath]
 			newPath += newName
