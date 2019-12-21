@@ -7,6 +7,7 @@ import (
 
 // Paths contains our path data and should be instantiated via GetPaths()
 type Paths struct {
+	root     string
 	assets   string
 	metadata string
 }
@@ -25,18 +26,30 @@ func GetPaths() *Paths {
 		instance = &Paths{}
 
 		local := os.Getenv("LOCALAPPDATA")
-		instance.assets = local + "/" + spotlight + "/LocalState/Assets"
-		instance.metadata = local + "/" + spotlight + "/LocalState/ContentManagementSDK/Creatives"
+		instance.root = local + "/" + spotlight
+		instance.assets = "LocalState/Assets"
+		instance.metadata = "LocalState/ContentManagementSDK/Creatives"
 	})
 	return instance
 }
 
+// ContentRoot returns the spotlight ContentDelivery root folder
+func (p *Paths) ContentRoot() string {
+	return p.root
+}
+
+// SetContentRoot allows us to use a different source folder tree
+// primarily for debugging purposes because we do not usually need to do so
+func (p *Paths) SetContentRoot(newRoot string) {
+	p.root = newRoot
+}
+
 // Assets returns the path to the spotlight assets folder
 func (p *Paths) Assets() string {
-	return p.assets
+	return p.root + "/" + p.assets
 }
 
 // Metadata returns the path to the spotlight metadata parent folder
 func (p *Paths) Metadata() string {
-	return p.metadata
+	return p.root + "/" + p.metadata
 }
