@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"image/jpeg"
@@ -18,10 +18,6 @@ import (
 )
 
 const version = "1.2"
-const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
-
-var localAppData = os.Getenv("LOCALAPPDATA")
-var sourcePath = localAppData + "/" + sourceFolder
 
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
@@ -46,7 +42,7 @@ func main() {
 	metadata := new(spotlight.MetaData)
 	metadata.ImportAll()
 
-	found := browseAssets(sourcePath, config.Width, config.Height, metadata)
+	found := browseAssets(config.SourcePath, config.Width, config.Height, metadata)
 	total, dups := scanExisting(config.TargetPath)
 
 	copied := 0
@@ -77,7 +73,7 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 			if _, ok := assetBySize[fileSize]; !ok {
 				assetBySize[fileSize] = make(map[string]string)
 			}
-			assetBySize[fileSize][assetPath] = md5String(assetPath)
+			assetBySize[fileSize][assetPath] = cryptoSum(assetPath)
 			toBeCopied[assetPath] = true
 			fileName[assetPath] = file.Name()
 			for _, image := range metadata.Images {
@@ -99,12 +95,12 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 	return assetsFound
 }
 
-func md5String(filePath string) string {
+func cryptoSum(filePath string) string {
 	file, err := os.Open(filePath)
 	defer file.Close()
 
 	if err == nil {
-		hash := md5.New()
+		hash := sha256.New()
 		if _, err := io.Copy(hash, file); err == nil {
 			return hex.EncodeToString(hash.Sum(nil))
 		}
@@ -152,11 +148,13 @@ func scanExisting(targetPath string) (int, int) {
 		fileSize := file.Size()
 		wpFound++
 		if _, ok := assetBySize[fileSize]; ok {
-			wpHash := md5String(filePath)
+			wpHash := cryptoSum(filePath)
 			for assetPath, assetHash := range assetBySize[fileSize] {
 				if wpHash == assetHash {
-					toBeCopied[assetPath] = false
-					matchesFound++
+					if toBeCopied[assetPath] {
+						toBeCopied[assetPath] = false
+						matchesFound++
+					}
 				}
 			}
 		}
@@ -193,7 +191,11 @@ func copyNewAssets(targetPath, prefix string, smart bool) int {
 				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], newName)
 				copied++
 			} else {
-				fmt.Printf("Error copying file: %v\n", err)
+				if nbytes == 0 {
+					fmt.Printf("Error copying file: %v\n", err)
+				} else {
+					fmt.Printf("Copied %d bytes of %s to %s; unable to set file time\n", nbytes, fileName[assetPath], newName)
+				}
 			}
 		}
 	}
@@ -222,6 +224,12 @@ func newFilename(desc, cr string) string {
 }
 
 func copyFile(src, dst string) (int64, error) {
+	file, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+	srcMTime := file.ModTime()
+
 	source, err := os.Open(src)
 	if err != nil {
 		return 0, err
@@ -232,9 +240,12 @@ func copyFile(src, dst string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer dest.Close()
 
 	nbytes, err := io.Copy(dest, source)
+	dest.Close()
+
+	err = os.Chtimes(dst, srcMTime, srcMTime)
+
 	return nbytes, err
 }
 
