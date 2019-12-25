@@ -191,7 +191,11 @@ func copyNewAssets(targetPath, prefix string, smart bool) int {
 				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, fileName[assetPath], newName)
 				copied++
 			} else {
-				fmt.Printf("Error copying file: %v\n", err)
+				if nbytes == 0 {
+					fmt.Printf("Error copying file: %v\n", err)
+				} else {
+					fmt.Printf("Copied %d bytes of %s to %s; unable to set file time\n", nbytes, fileName[assetPath], newName)
+				}
 			}
 		}
 	}
@@ -220,6 +224,12 @@ func newFilename(desc, cr string) string {
 }
 
 func copyFile(src, dst string) (int64, error) {
+	file, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+	srcMTime := file.ModTime()
+
 	source, err := os.Open(src)
 	if err != nil {
 		return 0, err
@@ -230,9 +240,12 @@ func copyFile(src, dst string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer dest.Close()
 
 	nbytes, err := io.Copy(dest, source)
+	dest.Close()
+
+	err = os.Chtimes(dst, srcMTime, srcMTime)
+
 	return nbytes, err
 }
 
