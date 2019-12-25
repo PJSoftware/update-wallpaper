@@ -17,7 +17,7 @@ import (
 	"./spotlight"
 )
 
-const version = "1.2"
+const version = "1.3.1"
 
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
