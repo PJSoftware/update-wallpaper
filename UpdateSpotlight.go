@@ -18,10 +18,6 @@ import (
 )
 
 const version = "1.2"
-const sourceFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy/LocalState/Assets"
-
-var localAppData = os.Getenv("LOCALAPPDATA")
-var sourcePath = localAppData + "/" + sourceFolder
 
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
@@ -39,6 +35,7 @@ func main() {
 	}
 	defer logFile.Close()
 	log.SetOutput(logFile)
+	// debuglog.Off()
 
 	var config spotlight.Config
 	config.Init(exePath)
@@ -46,18 +43,20 @@ func main() {
 	metadata := new(spotlight.MetaData)
 	metadata.ImportAll()
 
-	found := browseAssets(sourcePath, config.Width, config.Height, metadata)
+	found := browseAssets(config.SourcePath, config.Width, config.Height, metadata)
 	total, dups := scanExisting(config.TargetPath)
 
 	copied := 0
 	if found > dups {
 		copied = copyNewAssets(config.TargetPath, config.Prefix, config.SmartPrefix)
 	}
+	// debuglog.Off()
 	fmt.Printf("%d new images copied\n", copied)
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
 }
 
 func browseAssets(sourcePath string, width, height int, metadata *spotlight.MetaData) int {
+	// debuglog.Print(fmt.Sprintf("Searching %s", sourcePath))
 	assetsFound := 0
 	files, err := ioutil.ReadDir(sourcePath)
 	if err != nil {
@@ -89,6 +88,7 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 					photoData[assetPath] = make(map[string]string)
 					photoData[assetPath]["copyright"] = image.Copyright()
 					photoData[assetPath]["description"] = image.Description()
+					// debuglog.Print(fmt.Sprintf("Found details '%s' '%s' for %s", image.Description(), image.Copyright(), assetPath))
 				}
 			}
 			assetsFound++
@@ -155,8 +155,11 @@ func scanExisting(targetPath string) (int, int) {
 			wpHash := md5String(filePath)
 			for assetPath, assetHash := range assetBySize[fileSize] {
 				if wpHash == assetHash {
-					toBeCopied[assetPath] = false
-					matchesFound++
+					// debuglog.Print(fmt.Sprintf("Matched '%s' with '%s' (%d bytes) by MD5 (%s) found; no copy!", assetPath, file.Name(), fileSize, wpHash))
+					if toBeCopied[assetPath] {
+						toBeCopied[assetPath] = false
+						matchesFound++
+					}
 				}
 			}
 		}
