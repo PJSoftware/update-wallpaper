@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"image/jpeg"
@@ -35,7 +35,6 @@ func main() {
 	}
 	defer logFile.Close()
 	log.SetOutput(logFile)
-	// debuglog.Off()
 
 	var config spotlight.Config
 	config.Init(exePath)
@@ -50,13 +49,11 @@ func main() {
 	if found > dups {
 		copied = copyNewAssets(config.TargetPath, config.Prefix, config.SmartPrefix)
 	}
-	// debuglog.Off()
 	fmt.Printf("%d new images copied\n", copied)
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
 }
 
 func browseAssets(sourcePath string, width, height int, metadata *spotlight.MetaData) int {
-	// debuglog.Print(fmt.Sprintf("Searching %s", sourcePath))
 	assetsFound := 0
 	files, err := ioutil.ReadDir(sourcePath)
 	if err != nil {
@@ -76,7 +73,7 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 			if _, ok := assetBySize[fileSize]; !ok {
 				assetBySize[fileSize] = make(map[string]string)
 			}
-			assetBySize[fileSize][assetPath] = md5String(assetPath)
+			assetBySize[fileSize][assetPath] = cryptoSum(assetPath)
 			toBeCopied[assetPath] = true
 			fileName[assetPath] = file.Name()
 			for _, image := range metadata.Images {
@@ -88,7 +85,6 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 					photoData[assetPath] = make(map[string]string)
 					photoData[assetPath]["copyright"] = image.Copyright()
 					photoData[assetPath]["description"] = image.Description()
-					// debuglog.Print(fmt.Sprintf("Found details '%s' '%s' for %s", image.Description(), image.Copyright(), assetPath))
 				}
 			}
 			assetsFound++
@@ -99,12 +95,12 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 	return assetsFound
 }
 
-func md5String(filePath string) string {
+func cryptoSum(filePath string) string {
 	file, err := os.Open(filePath)
 	defer file.Close()
 
 	if err == nil {
-		hash := md5.New()
+		hash := sha256.New()
 		if _, err := io.Copy(hash, file); err == nil {
 			return hex.EncodeToString(hash.Sum(nil))
 		}
@@ -152,10 +148,9 @@ func scanExisting(targetPath string) (int, int) {
 		fileSize := file.Size()
 		wpFound++
 		if _, ok := assetBySize[fileSize]; ok {
-			wpHash := md5String(filePath)
+			wpHash := cryptoSum(filePath)
 			for assetPath, assetHash := range assetBySize[fileSize] {
 				if wpHash == assetHash {
-					// debuglog.Print(fmt.Sprintf("Matched '%s' with '%s' (%d bytes) by MD5 (%s) found; no copy!", assetPath, file.Name(), fileSize, wpHash))
 					if toBeCopied[assetPath] {
 						toBeCopied[assetPath] = false
 						matchesFound++

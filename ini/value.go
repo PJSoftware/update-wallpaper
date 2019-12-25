@@ -29,7 +29,6 @@ func (v *Value) AsString(def string, blankPermitted bool) string {
 			return def
 		}
 	}
-	// debuglog.Print(fmt.Sprintf("Returning '%s' for '%s'", v.strValue, v.key))
 	return v.strValue
 }
 
