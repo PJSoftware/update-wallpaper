@@ -17,8 +17,10 @@ import (
 	"./spotlight"
 )
 
-const version = "1.3.2"
+const version = "1.3.3"
 
+// TODO: We have all these maps keyed by assetName; perhaps it would be better
+// to have an Asset struct?
 var assetBySize map[int64]map[string]string
 var toBeCopied map[string]bool
 var photoData map[string]map[string]string
@@ -67,7 +69,7 @@ func browseAssets(sourcePath string, width, height int, metadata *spotlight.Meta
 	for _, file := range files {
 		assetName := file.Name()
 		assetPath := sourcePath + "/" + assetName
-		if isWallpaper(assetPath, width, height) {
+		if isWallpaper(assetName, width, height) {
 			fileSize := file.Size()
 			if _, ok := assetBySize[fileSize]; !ok {
 				assetBySize[fileSize] = make(map[string]string)
@@ -107,8 +109,9 @@ func cryptoSum(filePath string) string {
 	return ""
 }
 
-func isWallpaper(filePath string, width, height int) bool {
-	asset, err := os.Open(filePath)
+func isWallpaper(assetName string, width, height int) bool {
+	assetPath := config.SourcePath + "/" + assetName
+	asset, err := os.Open(assetPath)
 	if err != nil {
 		return false // Cannot read, so not interested in it
 	}
@@ -116,11 +119,11 @@ func isWallpaper(filePath string, width, height int) bool {
 
 	image, err := jpeg.DecodeConfig(asset)
 	if err == nil {
-		fileExt[filePath] = "jpg"
+		fileExt[assetName] = "jpg"
 	} else {
 		image, err = png.DecodeConfig(asset)
 		if err == nil {
-			fileExt[filePath] = "png"
+			fileExt[assetName] = "png"
 		} else {
 			return false // Neither a JPEG nor a PNG, so not interested in it
 		}
