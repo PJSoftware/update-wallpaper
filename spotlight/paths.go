@@ -12,11 +12,12 @@ type Paths struct {
 	metadata string
 }
 
-const spotlight = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy"
+const contentFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy"
 
 // Implementation of Singleton via http://marcio.io/2015/07/singleton-pattern-in-go/
 // As presented, results in lint warning #210; exporting Paths prevents this but loses
 // the guarantee that the struct cannot be used before initialising
+// TODO: look into ways to resolve this
 var instance *Paths
 var once sync.Once
 
@@ -26,7 +27,7 @@ func GetPaths() *Paths {
 		instance = &Paths{}
 
 		local := os.Getenv("LOCALAPPDATA")
-		instance.root = local + "/" + spotlight
+		instance.root = local + "/" + contentFolder
 		instance.assets = "LocalState/Assets"
 		instance.metadata = "LocalState/ContentManagementSDK/Creatives"
 	})
