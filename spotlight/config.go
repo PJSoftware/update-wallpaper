@@ -29,11 +29,13 @@ func (s *Config) Init(exePath string) {
 	s.Width = sectWallpaper.Value("ImageWidth").AsInt(1920)
 	s.Height = sectWallpaper.Value("ImageHeight").AsInt(1080)
 	s.TargetPath = sectWallpaper.Value("DestinationFolder").AsString(`C:\Wallpaper`, false)
-	contentRoot := sectWallpaper.Value("SpotlightContentFolder").AsString(GetPaths().ContentRoot(), false)
-	GetPaths().SetContentRoot(contentRoot)
-	s.SourcePath = GetPaths().Assets()
 
 	sectPrefix := s.iniFile.Section("Prefix")
 	s.Prefix = sectPrefix.Value("Prefix").AsString("ZZZ_Unsorted-", false)
 	s.SmartPrefix = sectPrefix.Value("SmartPrefix").AsBool(true)
+
+	// SpotlightContentFolder should only be specified in testing
+	contentRoot := sectWallpaper.ValueOptional("SpotlightContentFolder").AsString(GetPaths().ContentRoot(), false)
+	GetPaths().SetContentRoot(contentRoot)
+	s.SourcePath = GetPaths().Assets()
 }
