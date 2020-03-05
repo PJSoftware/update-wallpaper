@@ -23,6 +23,15 @@ func (s *Section) addValue(valName, value string) *Value {
 
 // Value returns named Value object from Section
 func (s *Section) Value(valName string) *Value {
+	val := s.ValueOptional(valName)
+	if val == nil {
+		log.Printf("INI.Section.Value: value '%s' not found", valName)
+	}
+	return val
+}
+
+// ValueOptional returns named Value object from Section
+func (s *Section) ValueOptional(valName string) *Value {
 	if s == nil {
 		log.Printf("INI.Section.Value: looking for '%s' in undefined section", valName)
 		return nil
@@ -30,7 +39,6 @@ func (s *Section) Value(valName string) *Value {
 	if val, ok := s.values[valName]; ok {
 		return val
 	}
-	log.Printf("INI.Section.Value: value '%s' not found", valName)
 	return nil
 }
 

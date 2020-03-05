@@ -18,9 +18,7 @@ type MetaData struct {
 
 // ImportAll is the entrypoint to all MetaData; it reads all relevant files
 func (m *MetaData) ImportAll() {
-	path := GetPaths()
-
-	err := filepath.Walk(path.Metadata(),
+	err := filepath.Walk(GetPaths().Metadata(),
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
