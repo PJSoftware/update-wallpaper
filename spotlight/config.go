@@ -35,7 +35,10 @@ func (s *Config) Init(exePath string) {
 	s.SmartPrefix = sectPrefix.Value("SmartPrefix").AsBool(true)
 
 	// SpotlightContentFolder should only be specified in testing
-	contentRoot := sectWallpaper.ValueOptional("SpotlightContentFolder").AsString(GetPaths().ContentRoot(), false)
-	GetPaths().SetContentRoot(contentRoot)
+	crv := sectWallpaper.ValueOptional("SpotlightContentFolder")
+	if crv != nil {
+		contentRoot := crv.AsString(GetPaths().ContentRoot(), false)
+		GetPaths().SetContentRoot(contentRoot)
+	}
 	s.SourcePath = GetPaths().Assets()
 }
