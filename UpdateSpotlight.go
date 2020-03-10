@@ -9,25 +9,18 @@ import (
 	"./spotlight"
 )
 
-const version = "1.4"
+const version = "1.4.1"
 
 var assets spotlight.Assets
 var config spotlight.Config
 
 func main() {
-	fmt.Printf("UpdateSpotlight v%s -- by PJSoftware\n", version)
-	// First determine exepath and set LOG file location
-	exePath := getEXEFolder()
-	logfn := exePath + "UpdateSpotlight.log"
-	_ = os.Remove(logfn)
-
-	logFile, err := os.OpenFile(logfn, os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logFile, exePath := initFiles()
 	defer logFile.Close()
-	log.SetOutput(logFile)
-	log.Printf("UpdateSpotlight v%s -- by PJSoftware", version)
+
+	welcomeMsg := fmt.Sprintf("UpdateSpotlight v%s -- by PJSoftware\n", version)
+	fmt.Printf(welcomeMsg)
+	log.Printf(welcomeMsg)
 
 	// Must initialise config before assets
 	config.Init(exePath)
@@ -43,6 +36,19 @@ func main() {
 	copied := assets.Copy()
 	fmt.Printf("%d new images copied\n", copied)
 	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
+}
+
+func initFiles() (*os.File, string) {
+	exePath := getEXEFolder()
+	logfn := exePath + "UpdateSpotlight.log"
+	_ = os.Remove(logfn)
+
+	logFile, err := os.OpenFile(logfn, os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(logFile)
+	return logFile, exePath
 }
 
 func getEXEFolder() string {
