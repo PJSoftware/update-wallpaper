@@ -16,7 +16,6 @@ import (
 
 // Assets gives us a better way to handle our Asset collection
 type Assets struct {
-	folder    string
 	meta      MetaData
 	config    Config
 	matches   int
@@ -33,12 +32,13 @@ type Asset struct {
 	copyright   string
 	description string
 	copyThis    bool
+	newName     string
+	newPath     string
 }
 
 // Init scans the asset folder to find all the valid assets
 func (as *Assets) Init(config Config) {
 	as.config = config
-	as.folder = config.SourcePath
 	as.meta.ImportAll()
 
 	as.byName = make(map[string]*Asset)
@@ -89,42 +89,14 @@ func (as *Assets) Copy() int {
 	}
 
 	for _, asset := range as.byName {
-		if asset.copyThis {
-			newPath := as.config.TargetPath + "/"
-			newName := asset.name
-			if asset.copyright != "" {
-				desc := asset.description
-				cr := asset.copyright
-				newName = newFilename(desc, cr)
-				if !as.config.SmartPrefix {
-					newPath += as.config.Prefix
-				}
-			} else {
-				newPath += as.config.Prefix
-			}
-			newName += "." + asset.extension
-			newPath += newName
-			nbytes, err := as.copyFile(asset.name, newPath)
-			if err == nil {
-				log.Printf("New image: %s (copied from %s)", newName, asset.name)
-				fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, asset.name, newName)
-				copied++
-			} else {
-				if nbytes == 0 {
-					fmt.Printf("Error copying file: %v\n", err)
-				} else {
-					fmt.Printf("Copied %d bytes of %s to %s; unable to set file time\n", nbytes, asset.name, newName)
-				}
-			}
-		}
+		copied += asset.publish(as.config)
 	}
-
 	return copied
 }
 
 // browse called by Init()
 func (as *Assets) browse() {
-	files, err := ioutil.ReadDir(as.folder)
+	files, err := ioutil.ReadDir(as.config.SourcePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -132,7 +104,7 @@ func (as *Assets) browse() {
 	for _, file := range files {
 		asset := new(Asset)
 		asset.name = file.Name()
-		asset.path = as.folder + "/" + asset.name
+		asset.path = as.config.SourcePath + "/" + asset.name
 		asset.extension = as.wpExtension(asset.path)
 
 		if asset.extension != "" {
@@ -201,8 +173,25 @@ func cryptoSum(filePath string) string {
 	return ""
 }
 
-// newFilename called by Copy()
-func newFilename(desc, cr string) string {
+func (a *Asset) setNewName(cfg Config) {
+	a.newPath = cfg.TargetPath + "/"
+	a.newName = a.name
+	if a.copyright != "" {
+		a.newFilename()
+		if !cfg.SmartPrefix {
+			a.newPath += cfg.Prefix
+		}
+	} else {
+		a.newPath += cfg.Prefix
+	}
+	a.newName += "." + a.extension
+	a.newPath += a.newName
+}
+
+func (a *Asset) newFilename() {
+	desc := a.description
+	cr := a.copyright
+
 	re := regexp.MustCompile(` *[<>:"/\|?*]+ *`)
 	desc = re.ReplaceAllString(desc, " + ")
 	cr = re.ReplaceAllString(cr, " + ")
@@ -219,12 +208,38 @@ func newFilename(desc, cr string) string {
 		cr = "© " + cr
 	}
 
-	return desc + " " + cr
+	a.newName = desc + " " + cr
 }
 
-// copyFile called by Copy()
-func (as *Assets) copyFile(sName, dst string) (int64, error) {
-	src := as.folder + "/" + sName
+func (a *Asset) publish(cfg Config) int {
+	if !a.copyThis {
+		return 0
+	}
+
+	a.setNewName(cfg)
+	if _, err := os.Stat(a.newPath); err == nil {
+		log.Printf("* Skipped copying '%s'; different version already exists\n", a.newName)
+		return 0
+	}
+
+	nbytes, err := a.copyFile(cfg.SourcePath)
+	if err == nil {
+		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
+		fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, a.name, a.newName)
+		return 1
+	}
+
+	if nbytes == 0 {
+		fmt.Printf("Error copying file: %v\n", err)
+		return 0
+	}
+
+	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", nbytes, a.name, a.newName)
+	return 1
+}
+
+func (a *Asset) copyFile(fromFolder string) (int64, error) {
+	src := fromFolder + "/" + a.name
 	file, err := os.Stat(src)
 	if err != nil {
 		return 0, err
@@ -237,7 +252,7 @@ func (as *Assets) copyFile(sName, dst string) (int64, error) {
 	}
 	defer source.Close()
 
-	dest, err := os.Create(dst)
+	dest, err := os.Create(a.newPath)
 	if err != nil {
 		return 0, err
 	}
@@ -245,7 +260,7 @@ func (as *Assets) copyFile(sName, dst string) (int64, error) {
 	nbytes, err := io.Copy(dest, source)
 	dest.Close()
 
-	err = os.Chtimes(dst, srcMTime, srcMTime)
+	err = os.Chtimes(a.newPath, srcMTime, srcMTime)
 
 	return nbytes, err
 }

@@ -18,12 +18,16 @@ func main() {
 	fmt.Printf("UpdateSpotlight v%s -- by PJSoftware\n", version)
 	// First determine exepath and set LOG file location
 	exePath := getEXEFolder()
-	logFile, err := os.OpenFile(exePath+"UpdateSpotlight.log", os.O_CREATE|os.O_APPEND, 0644)
+	logfn := exePath + "UpdateSpotlight.log"
+	_ = os.Remove(logfn)
+
+	logFile, err := os.OpenFile(logfn, os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer logFile.Close()
 	log.SetOutput(logFile)
+	log.Printf("UpdateSpotlight v%s -- by PJSoftware", version)
 
 	// Must initialise config before assets
 	config.Init(exePath)
