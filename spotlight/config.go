@@ -20,8 +20,8 @@ type Config struct {
 func (s *Config) Init(exePath string) {
 	err := s.iniFile.Parse(exePath + "UpdateSpotlight.ini")
 	if err != nil {
-		log.Print("world.Init: Error reading INI file: " + err.Error())
-		log.Print("world.Init: using Default parameters instead")
+		log.Print("config.Init: Error reading INI file: " + err.Error())
+		log.Print("config.Init: using Default parameters instead")
 		return
 	}
 

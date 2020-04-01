@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"regexp"
+
+	"../errors"
 )
 
 const unnamedSection = "**PARENT**"
@@ -20,14 +22,15 @@ type File struct {
 // Parse reads an ini file and creates Section/Value objects as required
 func (f *File) Parse(fileName string) error {
 
-	// Compile our regexp strings first; failure here is a coding error
+	// Compile our regexp strings first; failure here is a typing error
+	// and therefore panic on failure is justified
 	reSect := regexp.MustCompile(`^[[](.+)[]]`)
 	reValue := regexp.MustCompile(`^(\S+)=(.*)$`)
 	reExtract := regexp.MustCompile(`^"(.*)"$|^'(.*)'$`)
 
 	file, err := os.Open(fileName)
 	if err != nil {
-		return err
+		return errors.E{Code: errors.EFILENOTFOUND}
 	}
 	defer file.Close()
 
@@ -76,7 +79,7 @@ func (f *File) Parse(fileName string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return err
+		return errors.E{Code: errors.EREADERROR}
 	}
 
 	return nil

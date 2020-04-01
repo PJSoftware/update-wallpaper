@@ -12,6 +12,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"../errors"
 )
 
 // Assets gives us a better way to handle our Asset collection
@@ -241,19 +243,19 @@ func (a *Asset) copyFile(fromFolder string) (int64, error) {
 	src := fromFolder + "/" + a.name
 	file, err := os.Stat(src)
 	if err != nil {
-		return 0, err
+		return 0, errors.E{Code: errors.EFILENOTFOUND, Message: "Source file not found"}
 	}
 	srcMTime := file.ModTime()
 
 	source, err := os.Open(src)
 	if err != nil {
-		return 0, err
+		return 0, errors.E{Code: errors.EREADERROR, Message: "Could not read source file"}
 	}
 	defer source.Close()
 
 	dest, err := os.Create(a.newPath)
 	if err != nil {
-		return 0, err
+		return 0, errors.E{Code: errors.EWRITEERROR, Message: "Could not create target file"}
 	}
 
 	nbytes, err := io.Copy(dest, source)
