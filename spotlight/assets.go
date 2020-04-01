@@ -189,26 +189,25 @@ func (a *Asset) setNewName(cfg Config) {
 }
 
 func (a *Asset) newFilename() {
-	desc := a.description
-	cr := a.copyright
-
-	re := regexp.MustCompile(` *[<>:"/\|?*]+ *`)
-	desc = re.ReplaceAllString(desc, " + ")
-	cr = re.ReplaceAllString(cr, " + ")
-
-	re = regexp.MustCompile(` +`)
-	desc = re.ReplaceAllString(desc, " ")
-	cr = re.ReplaceAllString(cr, " ")
-
-	desc = strings.TrimSpace(desc)
-	cr = strings.TrimSpace(cr)
-
-	hasSym, _ := regexp.MatchString(`^© `, cr)
-	if !hasSym {
-		cr = "© " + cr
+	type repl struct {
+		in  string
+		out string
+	}
+	rs := []repl{
+		{`[<>:"/\|?*]+`, ` + `},
+		{`\s+`, ` `},
+		{`(\s*©)+\s*`, ` © `},
+		{`(\s+[+])+\s+`, ` + `},
 	}
 
-	a.newName = desc + " " + cr
+	nfn := strings.TrimSpace(a.description + " © " + a.copyright)
+
+	for _, r := range rs {
+		re := regexp.MustCompile(r.in)
+		nfn = re.ReplaceAllString(nfn, r.out)
+	}
+
+	a.newName = nfn
 }
 
 func (a *Asset) publish(cfg Config) int {
