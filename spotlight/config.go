@@ -3,7 +3,7 @@ package spotlight
 import (
 	"log"
 
-	"../ini"
+	"github.com/pjsoftware/win-spotlight/ini"
 )
 
 // Config provides interface to values from ini file

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./spotlight"
+	"github.com/pjsoftware/win-spotlight/spotlight"
 )
 
 const version = "1.4.2"

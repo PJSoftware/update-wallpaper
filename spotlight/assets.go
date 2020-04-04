@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	"../errors"
+	"github.com/pjsoftware/win-spotlight/errors"
 )
 
 // Assets gives us a better way to handle our Asset collection

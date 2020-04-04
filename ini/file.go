@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"../errors"
+	"github.com/pjsoftware/win-spotlight/errors"
 )
 
 const unnamedSection = "**PARENT**"
