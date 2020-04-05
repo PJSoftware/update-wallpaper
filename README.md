@@ -38,7 +38,7 @@ If the INI file is not found by the program, it will default to using the above 
 
 The program was developed and tested on two computers, one with a screen resolution of 1920x1080, one with 2560x1080. In both cases, Spotlight delivered 1920x1080 images (and 1080x1920 Portrait variants.) It is possible that your system may be receiving different resolution images, in which case you will need to modify the **ImageWidth** and **ImageHeight** values to match your requirements.
 
-**DestinationFolder** determines where the Spotlight assets, renamed to JPG (or PNG) files, should be placed. **UpdateSpotlight** does not merely look at filenames when determining whether an incoming Spotlight image already exists, so it is safe to rename them if required. 
+**DestinationFolder** determines where the Spotlight assets, renamed to JPG (or PNG) files, should be placed. **UpdateSpotlight** does not merely look at filenames when determining whether an incoming Spotlight image already exists, so it is safe to rename them if required.
 
 Any new Spotlight images will have the **Prefix** added to their filename to simplify any renaming you might wish to do.
 
