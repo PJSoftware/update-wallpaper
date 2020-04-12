@@ -1,8 +1,6 @@
 package spotlight
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"image/jpeg"
 	"image/png"
@@ -13,13 +11,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pjsoftware/win-spotlight/config"
 	"github.com/pjsoftware/win-spotlight/errors"
+	"github.com/pjsoftware/win-spotlight/util"
 )
 
 // Assets gives us a better way to handle our Asset collection
 type Assets struct {
 	meta      MetaData
-	config    Config
+	config    config.Config
 	matches   int
 	byName    map[string]*Asset
 	sumBySize map[int64]map[string]string
@@ -39,7 +39,7 @@ type Asset struct {
 }
 
 // Init scans the asset folder to find all the valid assets
-func (as *Assets) Init(config Config) {
+func (as *Assets) Init(config config.Config) {
 	as.config = config
 	as.meta.ImportAll()
 
@@ -67,7 +67,7 @@ func (as *Assets) Compare() (int, int) {
 		fileSize := file.Size()
 		wpFound++
 		if _, ok := as.sumBySize[fileSize]; ok {
-			wpHash := cryptoSum(filePath)
+			wpHash := util.FileHash(filePath)
 			for name, hash := range as.sumBySize[fileSize] {
 				if wpHash == hash {
 					as.byName[name].copyThis = false
@@ -114,7 +114,7 @@ func (as *Assets) browse() {
 			if _, ok := as.sumBySize[fileSize]; !ok {
 				as.sumBySize[fileSize] = make(map[string]string)
 			}
-			as.sumBySize[fileSize][asset.name] = cryptoSum(asset.path)
+			as.sumBySize[fileSize][asset.name] = util.FileHash(asset.path)
 			asset.copyThis = true
 			for _, image := range as.meta.Images {
 				if image.FileSize() == fileSize {
@@ -160,22 +160,7 @@ func (as *Assets) wpExtension(assetPath string) string {
 	return ext
 }
 
-// cryptoSum called by browse() and Compare()
-func cryptoSum(filePath string) string {
-	file, err := os.Open(filePath)
-	defer file.Close()
-
-	if err == nil {
-		hash := sha256.New()
-		if _, err := io.Copy(hash, file); err == nil {
-			return hex.EncodeToString(hash.Sum(nil))
-		}
-	}
-
-	return ""
-}
-
-func (a *Asset) setNewName(cfg Config) {
+func (a *Asset) setNewName(cfg config.Config) {
 	a.newPath = cfg.TargetPath + "/"
 	a.newName = a.name
 	if a.copyright != "" {
@@ -212,7 +197,7 @@ func (a *Asset) newFilename() {
 	a.newName = nfn
 }
 
-func (a *Asset) publish(cfg Config) int {
+func (a *Asset) publish(cfg config.Config) int {
 	if !a.copyThis {
 		return 0
 	}

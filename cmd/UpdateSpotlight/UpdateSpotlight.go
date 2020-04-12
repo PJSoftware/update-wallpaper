@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
+	"github.com/pjsoftware/win-spotlight/config"
+	"github.com/pjsoftware/win-spotlight/paths"
 	"github.com/pjsoftware/win-spotlight/spotlight"
 )
 
 const version = "1.4.2"
 
 var assets spotlight.Assets
-var config spotlight.Config
+var cfg config.Config
 
 func main() {
 	logFile, exePath := initFiles()
@@ -23,8 +24,8 @@ func main() {
 	log.Printf(welcomeMsg)
 
 	// Must initialise config before assets
-	config.Init(exePath)
-	assets.Init(config)
+	cfg.Init(exePath)
+	assets.Init(cfg)
 
 	found := assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)
@@ -39,7 +40,7 @@ func main() {
 }
 
 func initFiles() (*os.File, string) {
-	exePath := getEXEFolder()
+	exePath := paths.GetEXEFolder()
 	logfn := exePath + "UpdateSpotlight.log"
 	_ = os.Remove(logfn)
 
@@ -49,16 +50,4 @@ func initFiles() (*os.File, string) {
 	}
 	log.SetOutput(logFile)
 	return logFile, exePath
-}
-
-func getEXEFolder() string {
-	exeFilename := os.Args[0]
-	exeFolder := filepath.Dir(exeFilename)
-	exeAbsFolder, err := filepath.Abs(exeFolder)
-	if err != nil {
-		log.Printf("Unable to determine EXE folder: %v", err)
-		return ""
-	}
-
-	return exeAbsFolder + "\\"
 }

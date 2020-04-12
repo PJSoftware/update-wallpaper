@@ -1,9 +1,10 @@
-package spotlight
+package config
 
 import (
 	"log"
 
 	"github.com/pjsoftware/win-spotlight/ini"
+	"github.com/pjsoftware/win-spotlight/paths"
 )
 
 // Config provides interface to values from ini file
@@ -12,6 +13,7 @@ type Config struct {
 	TargetPath    string
 	SourcePath    string
 	Prefix        string
+	Archive       string
 	SmartPrefix   bool
 	iniFile       ini.File
 }
@@ -34,11 +36,14 @@ func (s *Config) Init(exePath string) {
 	s.Prefix = sectPrefix.Value("Prefix").AsString("ZZZ_Unsorted-", false)
 	s.SmartPrefix = sectPrefix.Value("SmartPrefix").AsBool(true)
 
+	sectArchive := s.iniFile.Section("Archive")
+	s.Archive = sectArchive.Value("Archive").AsString(`_Archive`, false)
+
 	// SpotlightContentFolder should only be specified in testing
 	crv := sectWallpaper.ValueOptional("SpotlightContentFolder")
 	if crv != nil {
-		contentRoot := crv.AsString(GetPaths().ContentRoot(), false)
-		GetPaths().SetContentRoot(contentRoot)
+		contentRoot := crv.AsString(paths.GetPaths().ContentRoot(), false)
+		paths.GetPaths().SetContentRoot(contentRoot)
 	}
-	s.SourcePath = GetPaths().Assets()
+	s.SourcePath = paths.GetPaths().Assets()
 }
