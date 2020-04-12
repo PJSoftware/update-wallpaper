@@ -2,6 +2,8 @@
 
 Automate copying of Windows Spotlight images into Wallpaper Folder
 
+## UpdateSpotlight
+
 The task is simple:
 
 * Look in the predefined Assets folder.
@@ -13,6 +15,7 @@ The task is simple:
 
 **UpdateSpotlight.exe** reads its configuration from the **UpdateSpotlight.ini** file which looks as follows:
 
+```ini
     [Wallpaper]
 
     # The resolution of image that we are looking for
@@ -23,16 +26,27 @@ The task is simple:
     DestinationFolder="C:\Wallpaper"
 
     [Prefix]
-    # Spotlight images copied into above folder wil have Prefix 
+    # Spotlight images copied into above folder wil have Prefix
     # added to their name based on the following values:
 
     # If prefix is not specified, or blank, no prefix will be used
     Prefix="ZZZ-"
 
-    # If SmartPrefix is True, the prefix will only be applied 
+    # If SmartPrefix is True, the prefix will only be applied
     # if no name is found in metadata. If SmartPrefix is False
     # or undefined, Prefix will be applied to all copied images.
     SmartPrefix=True
+
+    [Archive]
+    # Archive subfolder of DestinationFolder, contains old images
+    Archive="_Archive"
+
+    # Method can be either 'Delete' or 'SVN-Rename'. For most people
+    # it will be enough to delete the duplicates from the archive folder
+    # (if they even have one) but I keep my wallpapers in SVN, so it
+    # makes more sense to svn-rename ratther than delete!
+    Method="Delete"
+```
 
 If the INI file is not found by the program, it will default to using the above values.
 
@@ -43,3 +57,15 @@ The program was developed and tested on two computers, one with a screen resolut
 Any new Spotlight images will have the **Prefix** added to their filename to simplify any renaming you might wish to do.
 
 If **SmartPrefix** is True, **Prefix** will only be used if the program could not find Spotlight metadata for the image. (The Spotlight delivery folders may contain a dozen or more images, but will likely only contain metadata for the last three or four images that were delivered to your computer.)
+
+The `Archive` section is used by `DeleteDuplicates`.
+
+## DeleteDuplicates
+
+This can be used to compare your active Wallpaper folder with a non-active Archive folder. Any files in the Archive folder which are identical to a file in the Wallpaper folder will be deleted.
+
+The `Archive` parameters from the INI file work as follows:
+
+**Archive** specifies the name of the archive folder. It is treated as a subfolder of the **DestinationFolder**.
+
+**Method** defaults to "Delete". If it is set to "SVN-Rename" `DeleteDuplicates` will, rather than delete the duplicate, rename it using `svn` to the new name.
