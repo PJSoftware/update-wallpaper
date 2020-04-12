@@ -10,7 +10,7 @@ import (
 	"github.com/pjsoftware/win-spotlight/spotlight"
 )
 
-const version = "1.4.2"
+const version = "1.4.3"
 
 var assets spotlight.Assets
 var cfg config.Config
