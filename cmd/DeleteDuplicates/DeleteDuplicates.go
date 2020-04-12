@@ -22,5 +22,6 @@ func main() {
 	master := wallpaper.ImportFolder(cfg.TargetPath)
 	archive := wallpaper.ImportFolder(cfg.TargetPath + "\\" + cfg.Archive)
 
-	archive.DeleteDuplicates(master)
+	dh := cfg.DupHandler == "SVN-Rename"
+	archive.DeleteDuplicates(master, dh)
 }

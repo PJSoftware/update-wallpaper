@@ -15,6 +15,7 @@ type Config struct {
 	Prefix        string
 	Archive       string
 	SmartPrefix   bool
+	DupHandler    string
 	iniFile       ini.File
 }
 
@@ -38,6 +39,7 @@ func (s *Config) Init(exePath string) {
 
 	sectArchive := s.iniFile.Section("Archive")
 	s.Archive = sectArchive.Value("Archive").AsString(`_Archive`, false)
+	s.DupHandler = sectArchive.Value("Method").AsString(`Delete`, false)
 
 	// SpotlightContentFolder should only be specified in testing
 	crv := sectWallpaper.ValueOptional("SpotlightContentFolder")

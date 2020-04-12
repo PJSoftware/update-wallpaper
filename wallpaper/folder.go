@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 
 	"github.com/pjsoftware/win-spotlight/util"
 )
@@ -46,7 +47,7 @@ func ImportFolder(fPath string) *Folder {
 }
 
 // DeleteDuplicates deletes files from f which match fc
-func (f *Folder) DeleteDuplicates(fc *Folder) {
+func (f *Folder) DeleteDuplicates(fc *Folder, svnRename bool) {
 	for size, files := range f.bySize {
 		if cf, ok := fc.bySize[size]; ok {
 			for _, tbd := range files {
@@ -56,8 +57,19 @@ func (f *Folder) DeleteDuplicates(fc *Folder) {
 				tbc.hash = util.FileHash(fc.path + "/" + tbc.name)
 				for _, tbd := range files {
 					if tbc.hash == tbd.hash {
-						fmt.Printf("The following files are identical:\n   '%s'\n-> '%s'\nDeleting indicated copy!\n\n", tbc.name, tbd.name)
-						os.Remove(f.path + "/" + tbd.name)
+						method := "Deleting"
+						if svnRename {
+							method = "Renaming"
+						}
+						fmt.Printf("The following files are identical:\n   '%s'\n-> '%s'\n%s indicated copy!\n\n", tbc.name, tbd.name, method)
+
+						if svnRename {
+							os.Remove(fc.path + "/" + tbc.name)
+							cmd := exec.Command("svn", "rename", f.path+"/"+tbd.name, fc.path+"/"+tbc.name)
+							cmd.Run()
+						} else {
+							os.Remove(f.path + "/" + tbd.name)
+						}
 					}
 				}
 			}
