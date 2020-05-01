@@ -7,6 +7,7 @@ import (
 
 	"github.com/pjsoftware/win-spotlight/config"
 	"github.com/pjsoftware/win-spotlight/paths"
+	"github.com/pjsoftware/win-spotlight/splashscreen"
 	"github.com/pjsoftware/win-spotlight/spotlight"
 )
 
@@ -16,12 +17,10 @@ var assets spotlight.Assets
 var cfg config.Config
 
 func main() {
+	splashscreen.Show("UpdateSpotlight")
+
 	logFile, exePath := initFiles()
 	defer logFile.Close()
-
-	welcomeMsg := fmt.Sprintf("UpdateSpotlight v%s -- by PJSoftware\n", version)
-	fmt.Printf(welcomeMsg)
-	log.Printf(welcomeMsg)
 
 	// Must initialise config before assets
 	cfg.Init(exePath)
