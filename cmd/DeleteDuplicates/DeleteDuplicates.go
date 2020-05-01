@@ -7,12 +7,10 @@ import (
 	"github.com/pjsoftware/win-spotlight/wallpaper"
 )
 
-const version = "1.0.0"
-
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("DeleteDuplicates")
+	splashscreen.Show("DeleteDuplicates", "1.0.0")
 
 	exePath := paths.GetEXEFolder()
 	cfg.Init(exePath)

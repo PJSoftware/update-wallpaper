@@ -11,13 +11,11 @@ import (
 	"github.com/pjsoftware/win-spotlight/spotlight"
 )
 
-const version = "1.4.3"
-
 var assets spotlight.Assets
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("UpdateSpotlight")
+	splashscreen.Show("UpdateSpotlight", "1.4.3")
 
 	logFile, exePath := initFiles()
 	defer logFile.Close()
