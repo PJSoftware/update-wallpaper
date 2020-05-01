@@ -69,3 +69,7 @@ The `Archive` parameters from the INI file work as follows:
 **Archive** specifies the name of the archive folder. It is treated as a subfolder of the **DestinationFolder**.
 
 **Method** defaults to "Delete". If it is set to "SVN-Rename" `DeleteDuplicates` will, rather than delete the duplicate, rename it using `svn` to the new name.
+
+## Note on Versioning
+
+As I learn better ways to handle releases (not to mention better ways to use git branches) I am revising my approach. For Win-Spotlight, this means resetting my version to a "Toolset" version, and discarding any earlier version numbers that might have been in use. Apologies for any confusion. I shall do better going forward.

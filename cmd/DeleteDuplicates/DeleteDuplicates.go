@@ -1,20 +1,16 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/pjsoftware/win-spotlight/config"
 	"github.com/pjsoftware/win-spotlight/paths"
+	"github.com/pjsoftware/win-spotlight/splashscreen"
 	"github.com/pjsoftware/win-spotlight/wallpaper"
 )
-
-const version = "1.0.0"
 
 var cfg config.Config
 
 func main() {
-	welcomeMsg := fmt.Sprintf("DeleteDuplicates v%s -- by PJSoftware\n", version)
-	fmt.Printf(welcomeMsg)
+	splashscreen.Show("DeleteDuplicates", "1.0.0")
 
 	exePath := paths.GetEXEFolder()
 	cfg.Init(exePath)
