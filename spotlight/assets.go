@@ -123,6 +123,9 @@ func (as *Assets) browse() {
 					// identical size
 					asset.copyright = image.Copyright()
 					asset.description = image.Description()
+					if asset.description == "Unidentified Photo" {
+						asset.description += " (" + asset.name + ")"
+					}
 				}
 			}
 			as.byName[asset.name] = asset
