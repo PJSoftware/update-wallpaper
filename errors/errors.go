@@ -4,9 +4,9 @@ import "fmt"
 
 // application error codes
 const (
-	EFILENOTFOUND = "notfound"
-	EREADERROR    = "readerror"
-	EWRITEERROR   = "writeerror"
+	EFileNotFound = "notfound"
+	EReadError    = "readerror"
+	EWriteError   = "writeerror"
 )
 
 // E is our error type
