@@ -15,7 +15,7 @@ var assets spotlight.Assets
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("UpdateSpotlight", "1.4.3")
+	splashscreen.Show("UpdateSpotlight")
 
 	logFile, exePath := initFiles()
 	defer logFile.Close()
@@ -27,9 +27,9 @@ func main() {
 	found := assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)
 
-	total, dups := assets.Compare()
+	total, duplicates := assets.Compare()
 	fmt.Printf("%d Existing wallpapers found\n", found)
-	fmt.Printf("%d Spotlight assets match existing; skipping\n", dups)
+	fmt.Printf("%d Spotlight assets match existing; skipping\n", duplicates)
 
 	copied := assets.Copy()
 	fmt.Printf("%d new images copied\n", copied)
@@ -38,10 +38,10 @@ func main() {
 
 func initFiles() (*os.File, string) {
 	exePath := paths.GetEXEFolder()
-	logfn := exePath + "UpdateSpotlight.log"
-	_ = os.Remove(logfn)
+	logFN := exePath + "UpdateSpotlight.log"
+	_ = os.Remove(logFN)
 
-	logFile, err := os.OpenFile(logfn, os.O_CREATE, 0644)
+	logFile, err := os.OpenFile(logFN, os.O_CREATE, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}

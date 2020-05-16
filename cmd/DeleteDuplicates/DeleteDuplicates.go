@@ -10,7 +10,7 @@ import (
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("DeleteDuplicates", "1.0.0")
+	splashscreen.Show("DeleteDuplicates")
 
 	exePath := paths.GetEXEFolder()
 	cfg.Init(exePath)
