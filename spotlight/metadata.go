@@ -122,10 +122,8 @@ func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
 
 	pOK := parseProperties(data["properties"].(map[string]interface{}), &image)
 
-	item := data["items"].([]interface{})
-	iOK := parseItems(item[0].(map[string]interface{}), &image)
-
-	if pOK && iOK {
+	if pOK {
+		parseItems(data["items"].([]interface{}), &image)
 		image.metadataSrc = src
 
 		m.size++
@@ -149,11 +147,20 @@ func parseProperties(prop map[string]interface{}, image *ImageData) bool {
 	return image.fileSize > 0
 }
 
-func parseItems(item map[string]interface{}, image *ImageData) bool {
+func parseItems(item []interface{}, image *ImageData) bool {
 	var ok bool
 
+	if len(item) == 0 {
+		image.entityID = "UNKNOWN"
+		image.description = "Unidentified Photo"
+		image.copyright = "Unknown Photographer"
+		return false
+	}
+
+	item1 := item[0].(map[string]interface{})
+
 	var prop, copyright, desc map[string]interface{}
-	if prop, ok = item["properties"].(map[string]interface{}); !ok {
+	if prop, ok = item1["properties"].(map[string]interface{}); !ok {
 		return false
 	}
 	if copyright, ok = prop["copyright"].(map[string]interface{}); !ok {
@@ -163,7 +170,7 @@ func parseItems(item map[string]interface{}, image *ImageData) bool {
 		return false
 	}
 
-	image.entityID = stringFrom(item, "entityId")
+	image.entityID = stringFrom(item1, "entityId")
 	image.copyright = stringFrom(copyright, "text")
 	image.description = stringFrom(desc, "text")
 
