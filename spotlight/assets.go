@@ -211,19 +211,19 @@ func (a *Asset) publish(cfg config.Config) int {
 		return 0
 	}
 
-	nbytes, err := a.copyFile(cfg.SourcePath)
+	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
-		fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, a.name, a.newName)
+		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
 		return 1
 	}
 
-	if nbytes == 0 {
+	if numBytes == 0 {
 		fmt.Printf("Error copying file: %v\n", err)
 		return 0
 	}
 
-	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", nbytes, a.name, a.newName)
+	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
 	return 1
 }
 
@@ -231,25 +231,25 @@ func (a *Asset) copyFile(fromFolder string) (int64, error) {
 	src := fromFolder + "/" + a.name
 	file, err := os.Stat(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EFILENOTFOUND, Message: "Source file not found"}
+		return 0, errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
 	}
 	srcMTime := file.ModTime()
 
 	source, err := os.Open(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EREADERROR, Message: "Could not read source file"}
+		return 0, errors.E{Code: errors.EReadError, Message: "Could not read source file"}
 	}
 	defer source.Close()
 
 	dest, err := os.Create(a.newPath)
 	if err != nil {
-		return 0, errors.E{Code: errors.EWRITEERROR, Message: "Could not create target file"}
+		return 0, errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
 	}
 
-	nbytes, err := io.Copy(dest, source)
+	numBytes, err := io.Copy(dest, source)
 	dest.Close()
 
 	err = os.Chtimes(a.newPath, srcMTime, srcMTime)
 
-	return nbytes, err
+	return numBytes, err
 }
