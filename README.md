@@ -24,16 +24,6 @@ The task is simple:
 
     # This is where the Spotlight images should be delivered
     DestinationFolder="C:\Wallpaper"
-
-    [Archive]
-    # Archive subfolder of DestinationFolder, contains old images
-    Archive="_Archive"
-
-    # Method can be either 'Delete' or 'SVN-Rename'. For most people
-    # it will be enough to delete the duplicates from the archive folder
-    # (if they even have one) but I keep my wallpapers in SVN, so it
-    # makes more sense to svn-rename rather than delete!
-    Method="Delete"
 ```
 
 If the INI file is not found by the program, it will default to using the above values.
@@ -41,15 +31,3 @@ If the INI file is not found by the program, it will default to using the above 
 The program was developed and tested on two computers, one with a screen resolution of 1920x1080, one with 2560x1080. In both cases, Spotlight delivered 1920x1080 images (and 1080x1920 Portrait variants.) It is possible that your system may be receiving different resolution images, in which case you will need to modify the **ImageWidth** and **ImageHeight** values to match your requirements.
 
 **DestinationFolder** determines where the Spotlight assets, renamed to JPG (or PNG) files, should be placed. **UpdateSpotlight** does not merely look at filenames when determining whether an incoming Spotlight image already exists, so it is safe to rename them if required.
-
-The `Archive` section is used by `DeleteDuplicates`.
-
-## DeleteDuplicates
-
-This can be used to compare your active Wallpaper folder with a non-active Archive folder. Any files in the Archive folder which are identical to a file in the Wallpaper folder will be deleted.
-
-The `Archive` parameters from the INI file work as follows:
-
-**Archive** specifies the name of the archive folder. It is treated as a subfolder of the **DestinationFolder**.
-
-**Method** defaults to "Delete". If it is set to "SVN-Rename" `DeleteDuplicates` will, rather than delete the duplicate, rename it using `svn` to the new name.
