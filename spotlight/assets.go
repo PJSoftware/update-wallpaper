@@ -95,9 +95,7 @@ func isUnidentified(fn string) bool {
 	}
 
 	for _, prefix := range badPrefix {
-		pl := len(prefix)
-		fmt.Printf("Prefix len = %d; filename 'prefix' = '%s'\n", pl, fn[0:pl])
-		if fn[0:pl] == prefix {
+		if startsWith(fn, prefix) {
 			return true
 		}
 	}
@@ -186,7 +184,16 @@ func (as *Assets) wpExtension(assetPath string) string {
 }
 
 func (a *Asset) hasName() bool {
-	return a.description != noMetaDescription
+	return !startsWith(a.description, noMetaDescription)
+}
+
+func startsWith(testing string, target string) bool {
+	lenTarget := len(target)
+	if len(testing) < lenTarget {
+		return false
+	}
+
+	return testing[0:lenTarget] == target
 }
 
 func (a *Asset) setNewName(cfg config.Config) {
