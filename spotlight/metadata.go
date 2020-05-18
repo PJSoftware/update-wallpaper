@@ -18,6 +18,9 @@ type MetaData struct {
 	Images     []ImageData
 }
 
+const noMetaDescription string = "Unidentified Photo"
+const noMetaCopyright string = "Unknown Photographer"
+
 // ImportAll is the entrypoint to all MetaData; it reads all relevant files
 func (m *MetaData) ImportAll() {
 	err := filepath.Walk(paths.GetPaths().Metadata(),
@@ -152,8 +155,8 @@ func parseItems(item []interface{}, image *ImageData) bool {
 
 	if len(item) == 0 {
 		image.entityID = "UNKNOWN"
-		image.description = "Unidentified Photo"
-		image.copyright = "Unknown Photographer"
+		image.description = noMetaDescription
+		image.copyright = noMetaCopyright
 		return false
 	}
 
