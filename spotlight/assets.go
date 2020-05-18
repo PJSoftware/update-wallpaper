@@ -36,6 +36,7 @@ type Asset struct {
 	copyThis    bool
 	newName     string
 	newPath     string
+	replace     string
 }
 
 // Init scans the asset folder to find all the valid assets
@@ -67,12 +68,17 @@ func (as *Assets) Compare() (int, int) {
 		fileSize := file.Size()
 		wpFound++
 		if _, ok := as.sumBySize[fileSize]; ok {
-			wpHash := util.FileHash(filePath)
-			for name, hash := range as.sumBySize[fileSize] {
-				if wpHash == hash {
-					as.byName[name].copyThis = false
-					matchesFound++
-					log.Printf("** '%s' matched with '%s'", name, file.Name())
+			existingHash := util.FileHash(filePath)
+			for name, assetHash := range as.sumBySize[fileSize] {
+				if existingHash == assetHash {
+					if isUnidentified(file.Name()) && as.byName[name].hasName() {
+						log.Printf("** '%s' will replace existing '%s'", name, file.Name())
+						as.byName[name].replace = filePath
+					} else {
+						as.byName[name].copyThis = false
+						matchesFound++
+						log.Printf("** '%s' matched with '%s'", name, file.Name())
+					}
 				}
 			}
 		}
@@ -80,6 +86,21 @@ func (as *Assets) Compare() (int, int) {
 	}
 	as.matches = matchesFound
 	return wpFound, matchesFound
+}
+
+func isUnidentified(fn string) bool {
+	badPrefix := []string{
+		noMetaDescription,
+		"ZZZ_",
+	}
+
+	for _, prefix := range badPrefix {
+		pl := len(prefix)
+		if fn[0:pl-1] == prefix {
+			return true
+		}
+	}
+	return false
 }
 
 // Copy copies all new, non-matched assets to wallpaper
@@ -163,6 +184,10 @@ func (as *Assets) wpExtension(assetPath string) string {
 	return ext
 }
 
+func (a *Asset) hasName() bool {
+	return a.description != noMetaDescription
+}
+
 func (a *Asset) setNewName(cfg config.Config) {
 	a.newPath = cfg.TargetPath + "/"
 	a.newName = a.name
@@ -204,6 +229,10 @@ func (a *Asset) publish(cfg config.Config) int {
 		return 0
 	}
 
+	if a.replace != "" {
+		os.Remove(a.replace)
+	}
+
 	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
@@ -224,19 +253,19 @@ func (a *Asset) copyFile(fromFolder string) (int64, error) {
 	src := fromFolder + "/" + a.name
 	file, err := os.Stat(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
+		return 0, &errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
 	}
 	srcMTime := file.ModTime()
 
 	source, err := os.Open(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EReadError, Message: "Could not read source file"}
+		return 0, &errors.E{Code: errors.EReadError, Message: "Could not read source file"}
 	}
 	defer source.Close()
 
 	dest, err := os.Create(a.newPath)
 	if err != nil {
-		return 0, errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
+		return 0, &errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
 	}
 
 	numBytes, err := io.Copy(dest, source)
