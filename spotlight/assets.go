@@ -166,14 +166,7 @@ func (as *Assets) wpExtension(assetPath string) string {
 func (a *Asset) setNewName(cfg config.Config) {
 	a.newPath = cfg.TargetPath + "/"
 	a.newName = a.name
-	if a.copyright != "" {
-		a.newFilename()
-		if !cfg.SmartPrefix {
-			a.newPath += cfg.Prefix
-		}
-	} else {
-		a.newPath += cfg.Prefix
-	}
+	a.newFilename()
 	a.newName += "." + a.extension
 	a.newPath += a.newName
 }
