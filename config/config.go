@@ -19,7 +19,7 @@ type Config struct {
 
 // Init sets values to those from ini file, or to defaults if an error occurs
 func (s *Config) Init(exePath string) {
-	err := s.iniFile.Parse(exePath + "UpdateSpotlight.ini")
+	err := s.iniFile.Parse(exePath + "Win-Spotlight.ini")
 	if err != nil {
 		log.Print("config.Init: Error reading INI file: " + err.Error())
 		log.Print("config.Init: using Default parameters instead")

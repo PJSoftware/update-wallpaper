@@ -6,14 +6,14 @@ Automate copying of Windows Spotlight images into Wallpaper Folder
 
 The task is simple:
 
-* Look in the predefined Assets folder.
-* Examine all files therein.
-* Identify which ones are actually JPGs.
-* Filter to only include the wallpaper-sized photos.
-* Compare these with the ones already in the Wallpaper folder.
-* Copy across the ones we don't already have.
+- Look in the predefined Assets folder.
+- Examine all files therein.
+- Identify which ones are actually JPGs.
+- Filter to only include the wallpaper-sized photos.
+- Compare these with the ones already in the Wallpaper folder.
+- Copy across the ones we don't already have.
 
-**UpdateSpotlight.exe** reads its configuration from the **UpdateSpotlight.ini** file which looks as follows:
+**UpdateSpotlight.exe** reads its configuration from the **Win-Spotlight.ini** file which looks as follows:
 
 ```ini
     [Wallpaper]
