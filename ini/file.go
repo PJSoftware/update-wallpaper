@@ -30,7 +30,7 @@ func (f *File) Parse(fileName string) error {
 
 	file, err := os.Open(fileName)
 	if err != nil {
-		return errors.E{Code: errors.EFILENOTFOUND}
+		return &errors.E{Code: errors.EFileNotFound}
 	}
 	defer file.Close()
 
@@ -79,7 +79,7 @@ func (f *File) Parse(fileName string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return errors.E{Code: errors.EREADERROR}
+		return &errors.E{Code: errors.EReadError}
 	}
 
 	return nil

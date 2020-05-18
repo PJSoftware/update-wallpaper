@@ -36,6 +36,7 @@ type Asset struct {
 	copyThis    bool
 	newName     string
 	newPath     string
+	replace     string
 }
 
 // Init scans the asset folder to find all the valid assets
@@ -67,12 +68,17 @@ func (as *Assets) Compare() (int, int) {
 		fileSize := file.Size()
 		wpFound++
 		if _, ok := as.sumBySize[fileSize]; ok {
-			wpHash := util.FileHash(filePath)
-			for name, hash := range as.sumBySize[fileSize] {
-				if wpHash == hash {
-					as.byName[name].copyThis = false
-					matchesFound++
-					log.Printf("** '%s' matched with '%s'", name, file.Name())
+			existingHash := util.FileHash(filePath)
+			for name, assetHash := range as.sumBySize[fileSize] {
+				if existingHash == assetHash {
+					if isUnidentified(file.Name()) && as.byName[name].hasName() {
+						log.Printf("** '%s' will replace existing '%s'", name, file.Name())
+						as.byName[name].replace = filePath
+					} else {
+						as.byName[name].copyThis = false
+						matchesFound++
+						log.Printf("** '%s' matched with '%s'", name, file.Name())
+					}
 				}
 			}
 		}
@@ -80,6 +86,20 @@ func (as *Assets) Compare() (int, int) {
 	}
 	as.matches = matchesFound
 	return wpFound, matchesFound
+}
+
+func isUnidentified(fn string) bool {
+	badPrefix := []string{
+		noMetaDescription,
+		"ZZZ_",
+	}
+
+	for _, prefix := range badPrefix {
+		if startsWith(fn, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // Copy copies all new, non-matched assets to wallpaper
@@ -163,17 +183,23 @@ func (as *Assets) wpExtension(assetPath string) string {
 	return ext
 }
 
+func (a *Asset) hasName() bool {
+	return !startsWith(a.description, noMetaDescription)
+}
+
+func startsWith(testing string, target string) bool {
+	lenTarget := len(target)
+	if len(testing) < lenTarget {
+		return false
+	}
+
+	return testing[0:lenTarget] == target
+}
+
 func (a *Asset) setNewName(cfg config.Config) {
 	a.newPath = cfg.TargetPath + "/"
 	a.newName = a.name
-	if a.copyright != "" {
-		a.newFilename()
-		if !cfg.SmartPrefix {
-			a.newPath += cfg.Prefix
-		}
-	} else {
-		a.newPath += cfg.Prefix
-	}
+	a.newFilename()
 	a.newName += "." + a.extension
 	a.newPath += a.newName
 }
@@ -211,19 +237,23 @@ func (a *Asset) publish(cfg config.Config) int {
 		return 0
 	}
 
-	nbytes, err := a.copyFile(cfg.SourcePath)
+	if a.replace != "" {
+		os.Remove(a.replace)
+	}
+
+	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
-		fmt.Printf("Copied %d bytes of %s to %s\n", nbytes, a.name, a.newName)
+		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
 		return 1
 	}
 
-	if nbytes == 0 {
+	if numBytes == 0 {
 		fmt.Printf("Error copying file: %v\n", err)
 		return 0
 	}
 
-	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", nbytes, a.name, a.newName)
+	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
 	return 1
 }
 
@@ -231,25 +261,25 @@ func (a *Asset) copyFile(fromFolder string) (int64, error) {
 	src := fromFolder + "/" + a.name
 	file, err := os.Stat(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EFILENOTFOUND, Message: "Source file not found"}
+		return 0, &errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
 	}
 	srcMTime := file.ModTime()
 
 	source, err := os.Open(src)
 	if err != nil {
-		return 0, errors.E{Code: errors.EREADERROR, Message: "Could not read source file"}
+		return 0, &errors.E{Code: errors.EReadError, Message: "Could not read source file"}
 	}
 	defer source.Close()
 
 	dest, err := os.Create(a.newPath)
 	if err != nil {
-		return 0, errors.E{Code: errors.EWRITEERROR, Message: "Could not create target file"}
+		return 0, &errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
 	}
 
-	nbytes, err := io.Copy(dest, source)
+	numBytes, err := io.Copy(dest, source)
 	dest.Close()
 
 	err = os.Chtimes(a.newPath, srcMTime, srcMTime)
 
-	return nbytes, err
+	return numBytes, err
 }
