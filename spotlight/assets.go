@@ -96,7 +96,8 @@ func isUnidentified(fn string) bool {
 
 	for _, prefix := range badPrefix {
 		pl := len(prefix)
-		if fn[0:pl-1] == prefix {
+		fmt.Printf("Prefix len = %d; filename 'prefix' = '%s'\n", pl, fn[0:pl])
+		if fn[0:pl] == prefix {
 			return true
 		}
 	}
