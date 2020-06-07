@@ -25,23 +25,12 @@ func Detect(folder string) *Software {
 	s.folder = folder
 	s.Detected = none
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Printf("Error: %s", err)
-		return s
-	}
-
-	err = os.Chdir(folder)
-	if err != nil {
-		log.Printf("Error: %s", err)
-		return s
-	}
-
-	if isGit(folder) {
+	pushFolder(folder)
+	if isGit() {
 		s.Detected = git
 	}
+	popFolder()
 
-	os.Chdir(cwd)
 	return s
 }
 
@@ -55,14 +44,48 @@ func (s *Software) IsActive() bool {
 
 // Rename performs our file renaming via appropriate VC commands
 func (s *Software) Rename(oldFN, newFN string, targetPath string) {
-	old := targetPath + "/" + oldFN
-	new := targetPath + "/" + newFN
+	if s.Detected == none {
+		old := targetPath + "/" + oldFN
+		new := targetPath + "/" + newFN
+		os.Rename(old, new)
+		return
+	}
+
+	pushFolder(targetPath)
 	switch s.Detected {
 	case git:
-		gitRename(old, new)
-	case none:
-		os.Rename(old, new)
+		gitRename(oldFN, newFN)
 	default:
 		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+	popFolder()
+}
+
+var folderStack []string
+
+func pushFolder(folder string) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Printf("Error: %s", err)
+		return
+	}
+
+	err = os.Chdir(folder)
+	if err != nil {
+		log.Printf("Error: %s", err)
+		return
+	}
+
+	folderStack = append(folderStack, cwd)
+}
+
+func popFolder() {
+	if len(folderStack) == 0 {
+		return
+	} else {
+		index := len(folderStack) - 1
+		folder := folderStack[index]
+		folderStack = folderStack[:index]
+		os.Chdir(folder)
 	}
 }
