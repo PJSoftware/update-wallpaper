@@ -15,14 +15,16 @@ const (
 
 // Software is the data for our Version Control handler
 type Software struct {
-	folder   string
-	Detected vcs
+	folder    string
+	CanCommit bool
+	Detected  vcs
 }
 
 // Detect which version control method (if any) is active on specified folder
 func Detect(folder string) *Software {
 	s := new(Software)
 	s.folder = folder
+	s.CanCommit = false
 	s.Detected = none
 
 	pushFolder(folder)
@@ -54,11 +56,42 @@ func (s *Software) Rename(oldFN, newFN string, targetPath string) {
 	pushFolder(targetPath)
 	switch s.Detected {
 	case git:
-		gitRename(oldFN, newFN)
+		s.gitRename(oldFN, newFN)
 	default:
 		log.Printf("Unsupported VC software: %v", s.Detected)
 	}
 	popFolder()
+}
+
+// Add a file for committing
+func (s *Software) Add(filePath string) {
+	if s.Detected == none {
+		return
+	}
+
+	switch s.Detected {
+	case git:
+		s.gitAdd(filePath)
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+}
+
+// Commit new/changed files to Version Control
+func (s *Software) Commit() {
+	if s.Detected == none || !s.CanCommit {
+		return
+	}
+
+	cn := os.Getenv("COMPUTERNAME")
+	msg := "Add new Spotlight Files (" + cn + ")"
+
+	switch s.Detected {
+	case git:
+		s.gitCommit(msg)
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
 }
 
 var folderStack []string
@@ -82,10 +115,10 @@ func pushFolder(folder string) {
 func popFolder() {
 	if len(folderStack) == 0 {
 		return
-	} else {
-		index := len(folderStack) - 1
-		folder := folderStack[index]
-		folderStack = folderStack[:index]
-		os.Chdir(folder)
 	}
+
+	index := len(folderStack) - 1
+	folder := folderStack[index]
+	folderStack = folderStack[:index]
+	os.Chdir(folder)
 }
