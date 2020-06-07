@@ -1,5 +1,0 @@
-Added metadata files for reference
-
-These files contain the metadata which does not match the formatting we were expecting. I have also added the log file from UpdateSpotlight to show what else was in these files. Take a look to see if the format has changed or if this is just a one-off glitch.
-
-The best bet is to search by file size in bytes. The unidentified file is '744137' bytes; the identified one ("Spokane") is '447351' bytes.

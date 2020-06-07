@@ -6,14 +6,15 @@ Automate copying of Windows Spotlight images into Wallpaper Folder
 
 The task is simple:
 
-* Look in the predefined Assets folder.
-* Examine all files therein.
-* Identify which ones are actually JPGs.
-* Filter to only include the wallpaper-sized photos.
-* Compare these with the ones already in the Wallpaper folder.
-* Copy across the ones we don't already have.
+- Look in the predefined Assets folder.
+- Examine all files therein.
+- Identify which ones are actually JPGs.
+- Filter to only include the wallpaper-sized photos.
+- Compare these with the ones already in the Wallpaper folder.
+- Copy across the ones we don't already have.
+- If an incoming file matches an existing image but the name is different, rename with the _new_ MetaData name.
 
-**UpdateSpotlight.exe** reads its configuration from the **UpdateSpotlight.ini** file which looks as follows:
+**UpdateSpotlight.exe** reads its configuration from the **Win-Spotlight.ini** file which looks as follows:
 
 ```ini
     [Wallpaper]
@@ -24,28 +25,6 @@ The task is simple:
 
     # This is where the Spotlight images should be delivered
     DestinationFolder="C:\Wallpaper"
-
-    [Prefix]
-    # Spotlight images copied into above folder wil have Prefix
-    # added to their name based on the following values:
-
-    # If prefix is not specified, or blank, no prefix will be used
-    Prefix="ZZZ-"
-
-    # If SmartPrefix is True, the prefix will only be applied
-    # if no name is found in metadata. If SmartPrefix is False
-    # or undefined, Prefix will be applied to all copied images.
-    SmartPrefix=True
-
-    [Archive]
-    # Archive subfolder of DestinationFolder, contains old images
-    Archive="_Archive"
-
-    # Method can be either 'Delete' or 'SVN-Rename'. For most people
-    # it will be enough to delete the duplicates from the archive folder
-    # (if they even have one) but I keep my wallpapers in SVN, so it
-    # makes more sense to svn-rename ratther than delete!
-    Method="Delete"
 ```
 
 If the INI file is not found by the program, it will default to using the above values.
@@ -54,22 +33,14 @@ The program was developed and tested on two computers, one with a screen resolut
 
 **DestinationFolder** determines where the Spotlight assets, renamed to JPG (or PNG) files, should be placed. **UpdateSpotlight** does not merely look at filenames when determining whether an incoming Spotlight image already exists, so it is safe to rename them if required.
 
-Any new Spotlight images will have the **Prefix** added to their filename to simplify any renaming you might wish to do.
+### Version Control Support
 
-If **SmartPrefix** is True, **Prefix** will only be used if the program could not find Spotlight metadata for the image. (The Spotlight delivery folders may contain a dozen or more images, but will likely only contain metadata for the last three or four images that were delivered to your computer.)
+`UpdateSpotlight` detects whether an incoming image is identical to an existing image even if the filename is different. This may indicate that the existing image was imported by an earlier version before Metadata-naming was added as an option. In such a case, the existing file is renamed to the new, "correct" filename.
 
-The `Archive` section is used by `DeleteDuplicates`.
+If the wallpaper folder is under version control, this renaming will be performed via the VC software (where supported) because a `move` or `rename` of a file is typically much more efficient when the VC is aware the two are the same file!
 
-## DeleteDuplicates
+Additionally, `UpdateSpotlight` will commit the new (or renamed) wallpapers if a VC is detected.
 
-This can be used to compare your active Wallpaper folder with a non-active Archive folder. Any files in the Archive folder which are identical to a file in the Wallpaper folder will be deleted.
+Currently supported Version Control software includes:
 
-The `Archive` parameters from the INI file work as follows:
-
-**Archive** specifies the name of the archive folder. It is treated as a subfolder of the **DestinationFolder**.
-
-**Method** defaults to "Delete". If it is set to "SVN-Rename" `DeleteDuplicates` will, rather than delete the duplicate, rename it using `svn` to the new name.
-
-## Note on Versioning
-
-As I learn better ways to handle releases (not to mention better ways to use git branches) I am revising my approach. For Win-Spotlight, this means resetting my version to a "Toolset" version, and discarding any earlier version numbers that might have been in use. Apologies for any confusion. I shall do better going forward.
+- Git

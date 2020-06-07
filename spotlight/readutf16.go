@@ -22,7 +22,7 @@ func ReadUTF16(fileName string) ([]byte, error) {
 	reader := bufio.NewReader(file)
 	scanner := bufio.NewScanner(reader)
 
-	//adjust the capacity to accomodate largest likely file
+	//adjust the capacity to accommodate largest likely file
 	const maxCapacity = 256 * 1024
 	buf := make([]byte, maxCapacity)
 	scanner.Buffer(buf, maxCapacity)
