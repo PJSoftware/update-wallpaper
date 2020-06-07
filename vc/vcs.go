@@ -15,21 +15,30 @@ const (
 
 // Software is the data for our Version Control handler
 type Software struct {
-	folder   string
-	detected vcs
+	folder    string
+	CanCommit bool
+	Detected  vcs
 }
 
 // Detect which version control method (if any) is active on specified folder
 func Detect(folder string) *Software {
 	s := new(Software)
 	s.folder = folder
-	s.detected = none
+	s.CanCommit = false
+	s.Detected = none
+
+	pushFolder(folder)
+	if isGit() {
+		s.Detected = git
+	}
+	popFolder()
+
 	return s
 }
 
 // IsActive returns true if VC is active; otherwise returns false
 func (s *Software) IsActive() bool {
-	if s.detected == none {
+	if s.Detected == none {
 		return false
 	}
 	return true
@@ -37,12 +46,79 @@ func (s *Software) IsActive() bool {
 
 // Rename performs our file renaming via appropriate VC commands
 func (s *Software) Rename(oldFN, newFN string, targetPath string) {
-	old := targetPath + "/" + oldFN
-	new := targetPath + "/" + newFN
-	switch s.detected {
-	case none:
+	if s.Detected == none {
+		old := targetPath + "/" + oldFN
+		new := targetPath + "/" + newFN
 		os.Rename(old, new)
-	default:
-		log.Printf("Unsupported VC software: %v", s.detected)
+		return
 	}
+
+	pushFolder(targetPath)
+	switch s.Detected {
+	case git:
+		s.gitRename(oldFN, newFN)
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+	popFolder()
+}
+
+// Add a file for committing
+func (s *Software) Add(filePath string) {
+	if s.Detected == none {
+		return
+	}
+
+	switch s.Detected {
+	case git:
+		s.gitAdd(filePath)
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+}
+
+// Commit new/changed files to Version Control
+func (s *Software) Commit() {
+	if s.Detected == none || !s.CanCommit {
+		return
+	}
+
+	cn := os.Getenv("COMPUTERNAME")
+	msg := "Add new Spotlight Files (" + cn + ")"
+
+	switch s.Detected {
+	case git:
+		s.gitCommit(msg)
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+}
+
+var folderStack []string
+
+func pushFolder(folder string) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Printf("Error: %s", err)
+		return
+	}
+
+	err = os.Chdir(folder)
+	if err != nil {
+		log.Printf("Error: %s", err)
+		return
+	}
+
+	folderStack = append(folderStack, cwd)
+}
+
+func popFolder() {
+	if len(folderStack) == 0 {
+		return
+	}
+
+	index := len(folderStack) - 1
+	folder := folderStack[index]
+	folderStack = folderStack[:index]
+	os.Chdir(folder)
 }
