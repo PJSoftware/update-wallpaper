@@ -249,6 +249,7 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 
 	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
+		useVC.Add(a.newPath)
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
 		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
 		return 1, 0
@@ -259,6 +260,7 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 		return 0, 0
 	}
 
+	useVC.Add(a.newPath)
 	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
 	return 1, 0
 }
