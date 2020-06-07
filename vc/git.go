@@ -24,6 +24,16 @@ func (s *Software) gitRename(old, new string) {
 	s.CanCommit = true
 }
 
+func (s *Software) gitPull() {
+	cmd := exec.Command("git", "pull")
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error pulling from origin: %s", err)
+		return
+	}
+	s.CanCommit = true
+}
+
 func (s *Software) gitAdd(file string) {
 	cmd := exec.Command("git", "add", file)
 	err := cmd.Run()

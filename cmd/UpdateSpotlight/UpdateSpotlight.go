@@ -25,6 +25,7 @@ func main() {
 	cfg.Init(exePath)
 	assets.Init(cfg)
 	useVC := vc.Detect(cfg.TargetPath)
+	useVC.Update()
 
 	found := assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)

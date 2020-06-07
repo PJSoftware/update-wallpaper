@@ -1,6 +1,7 @@
 package vc
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -63,6 +64,21 @@ func (s *Software) Rename(oldFN, newFN string, targetPath string) {
 	popFolder()
 }
 
+// Update to latest state
+func (s *Software) Update() {
+	if s.Detected == none {
+		return
+	}
+
+	fmt.Printf("Updating to latest version\n")
+	switch s.Detected {
+	case git:
+		s.gitPull()
+	default:
+		log.Printf("Unsupported VC software: %v", s.Detected)
+	}
+}
+
 // Add a file for committing
 func (s *Software) Add(filePath string) {
 	if s.Detected == none {
@@ -86,6 +102,7 @@ func (s *Software) Commit() {
 	cn := os.Getenv("COMPUTERNAME")
 	msg := "Add new Spotlight Files (" + cn + ")"
 
+	fmt.Printf("Committing changes to repo\n")
 	switch s.Detected {
 	case git:
 		s.gitCommit(msg)
