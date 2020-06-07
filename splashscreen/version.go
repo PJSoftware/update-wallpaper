@@ -1,3 +1,3 @@
 package splashscreen
 
-const version string = "1.2"
+const version string = "1.3"

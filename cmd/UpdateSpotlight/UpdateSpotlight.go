@@ -9,6 +9,7 @@ import (
 	"github.com/pjsoftware/win-spotlight/paths"
 	"github.com/pjsoftware/win-spotlight/splashscreen"
 	"github.com/pjsoftware/win-spotlight/spotlight"
+	"github.com/pjsoftware/win-spotlight/vc"
 )
 
 var assets spotlight.Assets
@@ -23,6 +24,8 @@ func main() {
 	// Must initialise config before assets
 	cfg.Init(exePath)
 	assets.Init(cfg)
+	useVC := vc.Detect(cfg.TargetPath)
+	useVC.Update()
 
 	found := assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)
@@ -31,9 +34,12 @@ func main() {
 	fmt.Printf("%d Existing wallpapers found\n", found)
 	fmt.Printf("%d Spotlight assets match existing; skipping\n", duplicates)
 
-	copied := assets.Copy()
+	copied, replaced := assets.Copy(useVC)
 	fmt.Printf("%d new images copied\n", copied)
-	log.Printf("Existing: %d; Incoming: %d; New: %d", total, found, copied)
+	if replaced > 0 {
+		fmt.Printf("%d existing images replaced\n", replaced)
+	}
+	log.Printf("Existing: %d; Incoming: %d; New: %d; Replaced: %d", total, found, copied, replaced)
 }
 
 func initFiles() (*os.File, string) {

@@ -14,6 +14,7 @@ import (
 	"github.com/pjsoftware/win-spotlight/config"
 	"github.com/pjsoftware/win-spotlight/errors"
 	"github.com/pjsoftware/win-spotlight/util"
+	"github.com/pjsoftware/win-spotlight/vc"
 )
 
 // Assets gives us a better way to handle our Asset collection
@@ -103,17 +104,20 @@ func isUnidentified(fn string) bool {
 }
 
 // Copy copies all new, non-matched assets to wallpaper
-func (as *Assets) Copy() int {
+func (as *Assets) Copy(useVC *vc.Software) (int, int) {
 	copied := 0
+	renamed := 0
 
 	if as.Count() <= as.matches {
-		return copied
+		return copied, renamed
 	}
 
 	for _, asset := range as.byName {
-		copied += asset.publish(as.config)
+		cc, rc := asset.publish(as.config, useVC)
+		copied += cc
+		renamed += rc
 	}
-	return copied
+	return copied, renamed
 }
 
 // browse called by Init()
@@ -226,35 +230,39 @@ func (a *Asset) newFilename() {
 	a.newName = nfn
 }
 
-func (a *Asset) publish(cfg config.Config) int {
+func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 	if !a.copyThis {
-		return 0
+		return 0, 0
 	}
 
 	a.setNewName(cfg)
 	if _, err := os.Stat(a.newPath); err == nil {
 		log.Printf("* Skipped copying '%s'; different version already exists\n", a.newName)
-		return 0
+		return 0, 0
 	}
 
 	if a.replace != "" {
-		os.Remove(a.replace)
+		useVC.Rename(a.replace, a.newName, cfg.TargetPath)
+		log.Printf("New image %s replaced existing %s", a.newName, a.replace)
+		return 0, 1
 	}
 
 	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
+		useVC.Add(a.newPath)
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
 		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
-		return 1
+		return 1, 0
 	}
 
 	if numBytes == 0 {
 		fmt.Printf("Error copying file: %v\n", err)
-		return 0
+		return 0, 0
 	}
 
+	useVC.Add(a.newPath)
 	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
-	return 1
+	return 1, 0
 }
 
 func (a *Asset) copyFile(fromFolder string) (int64, error) {
