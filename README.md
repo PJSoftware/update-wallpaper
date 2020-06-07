@@ -43,4 +43,4 @@ Additionally, `UpdateSpotlight` will commit the new (or renamed) wallpapers if a
 
 Currently supported Version Control software includes:
 
-- --in development--
+- Git
