@@ -18,7 +18,7 @@ func (s *Software) gitRename(old, new string) {
 	cmd := exec.Command("git", "mv", old, new)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Error renaming with git: %s", err)
+		fmt.Printf("Error renaming with git: %s\n", err)
 		return
 	}
 	s.CanCommit = true
@@ -28,17 +28,16 @@ func (s *Software) gitPull() {
 	cmd := exec.Command("git", "pull")
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Error pulling from origin: %s", err)
+		fmt.Printf("Error pulling from origin: %s\n", err)
 		return
 	}
-	s.CanCommit = true
 }
 
 func (s *Software) gitAdd(file string) {
 	cmd := exec.Command("git", "add", file)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Error adding file with git: %s", err)
+		fmt.Printf("Error adding file with git: %s\n", err)
 		return
 	}
 	s.CanCommit = true
@@ -48,7 +47,7 @@ func (s *Software) gitCommit(msg string) {
 	cmd := exec.Command("git", "commit", "-m", msg)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Error committing to local repo: %s", err)
+		fmt.Printf("Error committing to local repo: %s\n", err)
 		return
 	}
 	s.CanCommit = false
@@ -56,6 +55,6 @@ func (s *Software) gitCommit(msg string) {
 	cmd = exec.Command("git", "push")
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("Error pushing to remote repo: %s", err)
+		fmt.Printf("Error pushing to remote repo: %s\n", err)
 	}
 }
