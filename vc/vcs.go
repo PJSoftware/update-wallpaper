@@ -94,13 +94,13 @@ func (s *Software) Add(filePath string) {
 }
 
 // Commit new/changed files to Version Control
-func (s *Software) Commit() {
+func (s *Software) Commit(commitMsg string) {
 	if s.Detected == none || !s.CanCommit {
 		return
 	}
 
 	cn := os.Getenv("COMPUTERNAME")
-	msg := "Add new Spotlight Files (" + cn + ")"
+	msg := commitMsg + " (" + cn + ")"
 
 	fmt.Printf("Committing changes to repo\n")
 	switch s.Detected {
