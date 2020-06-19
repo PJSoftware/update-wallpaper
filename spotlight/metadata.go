@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/pjsoftware/win-spotlight/paths"
 )
 
 // MetaData is the interface/container for ImageData entries
@@ -23,7 +21,7 @@ const noMetaCopyright string = "Unknown Photographer"
 
 // ImportAll is the entrypoint to all MetaData; it reads all relevant files
 func (m *MetaData) ImportAll() {
-	err := filepath.Walk(paths.GetPaths().Metadata(),
+	err := filepath.Walk(GetPaths().Metadata(),
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err

@@ -1,9 +1,7 @@
-package paths
+package spotlight
 
 import (
-	"log"
 	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -14,7 +12,7 @@ type Paths struct {
 	metadata string
 }
 
-const contentFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy"
+const spotlightFolder = "Packages/Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy"
 
 // Implementation of Singleton via http://marcio.io/2015/07/singleton-pattern-in-go/
 // As presented, results in lint warning #210; exporting Paths prevents this but loses
@@ -29,7 +27,7 @@ func GetPaths() *Paths {
 		instance = &Paths{}
 
 		local := os.Getenv("LOCALAPPDATA")
-		instance.root = local + "/" + contentFolder
+		instance.root = local + "/" + spotlightFolder
 		instance.assets = "LocalState/Assets"
 		instance.metadata = "LocalState/ContentManagementSDK/Creatives"
 	})
@@ -55,17 +53,4 @@ func (p *Paths) Assets() string {
 // Metadata returns the path to the spotlight metadata parent folder
 func (p *Paths) Metadata() string {
 	return p.root + "/" + p.metadata
-}
-
-// GetEXEFolder returns path to current executable
-func GetEXEFolder() string {
-	exeFilename := os.Args[0]
-	exeFolder := filepath.Dir(exeFilename)
-	exeAbsFolder, err := filepath.Abs(exeFolder)
-	if err != nil {
-		log.Printf("Unable to determine EXE folder: %v", err)
-		return ""
-	}
-
-	return exeAbsFolder + "\\"
 }

@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/pjsoftware/win-spotlight/config"
-	"github.com/pjsoftware/win-spotlight/paths"
 	"github.com/pjsoftware/win-spotlight/splashscreen"
 	"github.com/pjsoftware/win-spotlight/spotlight"
+	"github.com/pjsoftware/win-spotlight/util"
 	"github.com/pjsoftware/win-spotlight/vc"
 )
 
@@ -27,7 +27,7 @@ func main() {
 }
 
 func initFiles() (*os.File, string) {
-	exePath := paths.GetEXEFolder()
+	exePath := util.GetEXEFolder()
 	logFN := exePath + "UpdateWallpaper.log"
 	_ = os.Remove(logFN)
 
