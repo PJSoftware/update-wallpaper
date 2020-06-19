@@ -16,13 +16,30 @@ var assets spotlight.Assets
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("UpdateSpotlight")
+	splashscreen.Show("UpdateWallpaper")
 
 	logFile, exePath := initFiles()
 	defer logFile.Close()
-
-	// Must initialise config before assets
 	cfg.Init(exePath)
+
+	updateSpotlight()
+	updateMomentum()
+}
+
+func initFiles() (*os.File, string) {
+	exePath := paths.GetEXEFolder()
+	logFN := exePath + "UpdateWallpaper.log"
+	_ = os.Remove(logFN)
+
+	logFile, err := os.OpenFile(logFN, os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(logFile)
+	return logFile, exePath
+}
+
+func updateSpotlight() {
 	assets.Init(cfg)
 	useVC := vc.Detect(cfg.TargetPath)
 	useVC.Update()
@@ -43,15 +60,5 @@ func main() {
 	useVC.Commit("Add new Spotlight Files")
 }
 
-func initFiles() (*os.File, string) {
-	exePath := paths.GetEXEFolder()
-	logFN := exePath + "UpdateSpotlight.log"
-	_ = os.Remove(logFN)
-
-	logFile, err := os.OpenFile(logFN, os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetOutput(logFile)
-	return logFile, exePath
+func updateMomentum() {
 }
