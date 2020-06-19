@@ -40,6 +40,7 @@ func main() {
 		fmt.Printf("%d existing images replaced\n", replaced)
 	}
 	log.Printf("Existing: %d; Incoming: %d; New: %d; Replaced: %d", total, found, copied, replaced)
+	useVC.Commit()
 }
 
 func initFiles() (*os.File, string) {
