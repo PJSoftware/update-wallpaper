@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/pjsoftware/win-spotlight/ini"
+	"github.com/pjsoftware/win-spotlight/paths"
 )
 
 // Config provides interface to values from ini file
@@ -27,4 +28,5 @@ func (s *Config) Init(exePath string) {
 	s.Width = sectWallpaper.Value("ImageWidth").AsInt(1920)
 	s.Height = sectWallpaper.Value("ImageHeight").AsInt(1080)
 	s.TargetPath = sectWallpaper.Value("DestinationFolder").AsString(`C:\Wallpaper`, false)
+	s.SourcePath = paths.GetSpotlightPaths().Assets()
 }
