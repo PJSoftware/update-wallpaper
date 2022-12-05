@@ -6,11 +6,11 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/pjsoftware/win-spotlight/errors"
+	"github.com/pjsoftware/update-wallpaper/pkg/errors"
 )
 
 const unnamedSection = "**PARENT**"
-const noSectionNames = "**FLAT**"
+// const noSectionNames = "**FLAT**"
 
 // File object provides interface to an ini file
 type File struct {

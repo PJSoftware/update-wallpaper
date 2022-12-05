@@ -3,8 +3,8 @@ package config
 import (
 	"log"
 
-	"github.com/pjsoftware/win-spotlight/ini"
-	"github.com/pjsoftware/win-spotlight/paths"
+	"github.com/pjsoftware/update-wallpaper/pkg/ini"
+	"github.com/pjsoftware/update-wallpaper/pkg/paths"
 )
 
 // Config provides interface to values from ini file

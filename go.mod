@@ -1,3 +1,3 @@
-module github.com/pjsoftware/win-spotlight
+module github.com/pjsoftware/update-wallpaper
 
-go 1.13
+go 1.19

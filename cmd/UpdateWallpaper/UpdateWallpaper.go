@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/pjsoftware/win-spotlight/config"
-	"github.com/pjsoftware/win-spotlight/splashscreen"
-	"github.com/pjsoftware/win-spotlight/spotlight"
-	"github.com/pjsoftware/win-spotlight/util"
-	"github.com/pjsoftware/win-spotlight/vc"
+	"github.com/pjsoftware/update-wallpaper/pkg/config"
+	"github.com/pjsoftware/update-wallpaper/pkg/splashscreen"
+	"github.com/pjsoftware/update-wallpaper/pkg/spotlight"
+	"github.com/pjsoftware/update-wallpaper/pkg/util"
+	"github.com/pjsoftware/update-wallpaper/pkg/vc"
 )
 
 var assets spotlight.Assets

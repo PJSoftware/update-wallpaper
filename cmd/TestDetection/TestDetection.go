@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/pjsoftware/win-spotlight/vc"
+	"github.com/pjsoftware/update-wallpaper/pkg/vc"
 )
 
 func main() {

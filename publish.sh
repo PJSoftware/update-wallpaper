@@ -23,8 +23,8 @@ cp cmd/UpdateWallpaper/UpdateWallpaper.exe /c/Wallpaper
 # git push --tags
 # ./publish.sh
 # cd /c/Wallpaper
-# git add UpdateSpotlight.exe
-# git commit -m "upgrade UpdateSpotlight to v1.3"
+# git add UpdateWallpaper.exe
+# git commit -m "upgrade UpdateWallpaper to v1.3"
 # git push
 # cd -
 # git checkout dev
