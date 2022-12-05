@@ -244,6 +244,7 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 	if a.replace != "" {
 		useVC.Rename(a.replace, a.newName, cfg.TargetPath)
 		log.Printf("New image %s replaced existing %s", a.newName, a.replace)
+		fmt.Printf("New name %s for existing unidentified image\n", a.newName)
 		return 0, 1
 	}
 
