@@ -9,7 +9,6 @@ import (
 	"github.com/pjsoftware/update-wallpaper/pkg/splashscreen"
 	"github.com/pjsoftware/update-wallpaper/pkg/spotlight"
 	"github.com/pjsoftware/update-wallpaper/pkg/util"
-	"github.com/pjsoftware/update-wallpaper/pkg/vc"
 )
 
 var assets spotlight.Assets
@@ -41,8 +40,6 @@ func initFiles() (*os.File, string) {
 
 func updateSpotlight() {
 	assets.Init(cfg)
-	useVC := vc.Detect(cfg.TargetPath)
-	useVC.Update()
 
 	found := assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)
@@ -51,13 +48,12 @@ func updateSpotlight() {
 	fmt.Printf("%d Existing wallpapers found\n", found)
 	fmt.Printf("%d Spotlight assets match existing; skipping\n", duplicates)
 
-	copied, replaced := assets.Copy(useVC)
+	copied, replaced := assets.Copy()
 	fmt.Printf("%d new images copied\n", copied)
 	if replaced > 0 {
 		fmt.Printf("%d existing images replaced\n", replaced)
 	}
 	log.Printf("Existing: %d; Incoming: %d; New: %d; Replaced: %d", total, found, copied, replaced)
-	useVC.Commit("Add new Spotlight Files")
 }
 
 func updateMomentum() {

@@ -14,7 +14,6 @@ import (
 	"github.com/pjsoftware/update-wallpaper/pkg/config"
 	"github.com/pjsoftware/update-wallpaper/pkg/errors"
 	"github.com/pjsoftware/update-wallpaper/pkg/util"
-	"github.com/pjsoftware/update-wallpaper/pkg/vc"
 )
 
 // Assets gives us a better way to handle our Asset collection
@@ -104,7 +103,7 @@ func isUnidentified(fn string) bool {
 }
 
 // Copy copies all new, non-matched assets to wallpaper
-func (as *Assets) Copy(useVC *vc.Software) (int, int) {
+func (as *Assets) Copy() (int, int) {
 	copied := 0
 	renamed := 0
 
@@ -113,7 +112,7 @@ func (as *Assets) Copy(useVC *vc.Software) (int, int) {
 	}
 
 	for _, asset := range as.byName {
-		cc, rc := asset.publish(as.config, useVC)
+		cc, rc := asset.publish(as.config)
 		copied += cc
 		renamed += rc
 	}
@@ -230,7 +229,7 @@ func (a *Asset) newFilename() {
 	a.newName = nfn
 }
 
-func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
+func (a *Asset) publish(cfg config.Config) (int, int) {
 	if !a.copyThis {
 		return 0, 0
 	}
@@ -242,7 +241,9 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 	}
 
 	if a.replace != "" {
-		useVC.Rename(a.replace, a.newName, cfg.TargetPath)
+		old := cfg.TargetPath + "/" + a.replace
+		new := cfg.TargetPath + "/" + a.newName
+		os.Rename(old, new)
 		log.Printf("New image %s replaced existing %s", a.newName, a.replace)
 		fmt.Printf("New name %s for existing unidentified image\n", a.newName)
 		return 0, 1
@@ -250,7 +251,6 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 
 	numBytes, err := a.copyFile(cfg.SourcePath)
 	if err == nil {
-		useVC.Add(a.newPath)
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
 		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
 		return 1, 0
@@ -261,7 +261,6 @@ func (a *Asset) publish(cfg config.Config, useVC *vc.Software) (int, int) {
 		return 0, 0
 	}
 
-	useVC.Add(a.newPath)
 	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
 	return 1, 0
 }
