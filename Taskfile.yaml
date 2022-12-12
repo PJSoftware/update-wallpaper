@@ -12,7 +12,16 @@ tasks:
     cmds:
       - go build -o bin/UpdateWallpaper.exe ./cmd/UpdateWallpaper
 
+  run_wallpaper:
+    internal: true
+    dir: c:\Wallpaper
+    cmds:
+      - ./UpdateWallpaper.exe
+
   run:
     cmds:
       - task: build
-      - ./bin/UpdateWallpaper.exe
+      - mkdir -p /c/Wallpaper
+      - cp ./bin/UpdateWallpaper.exe /c/Wallpaper
+      - cp ./ini/UpdateWallpaper.ini /c/Wallpaper
+      - task: run_wallpaper
