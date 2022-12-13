@@ -9,12 +9,15 @@ tasks:
       - task --list-all
 
   build:
+    sources:
+      - cmd/UpdateWallpaper/*.go
+      - pkg/**/*.go
     cmds:
-      - go build -o bin/UpdateWallpaper.exe ./cmd/UpdateWallpaper
+      - go build -o build/UpdateWallpaper.exe ./cmd/UpdateWallpaper
 
   run_wallpaper:
     internal: true
-    dir: c:\Wallpaper
+    dir: c:\Wallpaper\bin
     cmds:
       - ./UpdateWallpaper.exe
 
@@ -22,6 +25,8 @@ tasks:
     cmds:
       - task: build
       - mkdir -p /c/Wallpaper
-      - cp ./bin/UpdateWallpaper.exe /c/Wallpaper
-      - cp ./ini/UpdateWallpaper.ini /c/Wallpaper
+      - mkdir -p /c/Wallpaper/Spotlight
+      - mkdir -p /c/Wallpaper/bin
+      - cp ./build/UpdateWallpaper.exe /c/Wallpaper/bin
+      - cp ./ini/UpdateWallpaper.ini /c/Wallpaper/bin
       - task: run_wallpaper

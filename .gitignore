@@ -1,4 +1,5 @@
 *.exe
 *.log
-bin/
+build/
 .vscode/
+.task/
