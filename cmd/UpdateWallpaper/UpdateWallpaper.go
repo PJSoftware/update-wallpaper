@@ -15,7 +15,7 @@ var assets spotlight.Assets
 var cfg config.Config
 
 func main() {
-	splashscreen.Show("UpdateWallpaper")
+	splashscreen.Show("UpdateWallpaper", uwVersion)
 
 	logFile, exePath := initFiles()
 	defer logFile.Close()
