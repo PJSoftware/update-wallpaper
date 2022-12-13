@@ -19,7 +19,7 @@ func main() {
 
 	logFile, exePath := initFiles()
 	defer logFile.Close()
-	cfg.Init(exePath)
+	cfg.Init(exePath, "UpdateWallpaper.ini")
 
 	updateSpotlight()
 	updateMomentum()
