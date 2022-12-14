@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/pjsoftware/update-wallpaper/pkg/config"
+	"github.com/pjsoftware/update-wallpaper/pkg/paths"
 	"github.com/pjsoftware/update-wallpaper/pkg/splashscreen"
 	"github.com/pjsoftware/update-wallpaper/pkg/spotlight"
-	"github.com/pjsoftware/update-wallpaper/pkg/util"
 )
 
 var assets spotlight.Assets
@@ -26,7 +26,7 @@ func main() {
 }
 
 func initFiles() (*os.File, string) {
-	exePath := util.GetEXEFolder()
+	exePath := paths.GetEXEFolder()
 	logFN := exePath + "UpdateWallpaper.log"
 	_ = os.Remove(logFN)
 

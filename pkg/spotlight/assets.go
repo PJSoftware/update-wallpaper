@@ -5,7 +5,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -13,7 +12,7 @@ import (
 
 	"github.com/pjsoftware/update-wallpaper/pkg/config"
 	"github.com/pjsoftware/update-wallpaper/pkg/errors"
-	"github.com/pjsoftware/update-wallpaper/pkg/util"
+	"github.com/pjsoftware/update-wallpaper/pkg/sha"
 )
 
 // Assets gives us a better way to handle our Asset collection
@@ -58,17 +57,18 @@ func (as *Assets) Count() int {
 func (as *Assets) Compare() (int, int) {
 	wpFound := 0
 	matchesFound := 0
-	files, err := ioutil.ReadDir(as.config.TargetPath)
+	files, err := os.ReadDir(as.config.TargetPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, file := range files {
 		filePath := as.config.TargetPath + "/" + file.Name()
-		fileSize := file.Size()
+		fileInfo, _ := file.Info()
+		fileSize := fileInfo.Size()
 		wpFound++
 		if _, ok := as.sumBySize[fileSize]; ok {
-			existingHash := util.FileHash(filePath)
+			existingHash := sha.FileHash(filePath)
 			for name, assetHash := range as.sumBySize[fileSize] {
 				if existingHash == assetHash {
 					if isUnidentified(file.Name()) && as.byName[name].hasName() {
@@ -121,7 +121,7 @@ func (as *Assets) Copy() (int, int) {
 
 // browse called by Init()
 func (as *Assets) browse() {
-	files, err := ioutil.ReadDir(as.config.SourcePath)
+	files, err := os.ReadDir(as.config.SourcePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -133,11 +133,12 @@ func (as *Assets) browse() {
 		asset.extension = as.wpExtension(asset.path)
 
 		if asset.extension != "" {
-			fileSize := file.Size()
+			fileInfo, _ := file.Info()
+			fileSize := fileInfo.Size()
 			if _, ok := as.sumBySize[fileSize]; !ok {
 				as.sumBySize[fileSize] = make(map[string]string)
 			}
-			as.sumBySize[fileSize][asset.name] = util.FileHash(asset.path)
+			as.sumBySize[fileSize][asset.name] = sha.FileHash(asset.path)
 			asset.copyThis = true
 			for _, image := range as.meta.Images {
 				if image.FileSize() == fileSize {
