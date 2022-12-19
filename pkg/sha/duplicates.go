@@ -1,4 +1,4 @@
-package util
+package sha
 
 import (
 	"crypto/sha256"

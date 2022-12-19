@@ -1,8 +1,8 @@
 package wallpaper
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 // Folder contains a collection of files
@@ -25,7 +25,7 @@ func ImportFolder(fPath string) *Folder {
 	f.path = fPath
 	f.bySize = make(map[int64][]*File)
 
-	files, err := ioutil.ReadDir(f.path)
+	files, err := os.ReadDir(f.path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,7 +33,8 @@ func ImportFolder(fPath string) *Folder {
 	for _, file := range files {
 		fs := new(File)
 		fs.name = file.Name()
-		fs.size = file.Size()
+		info, _ := file.Info()
+		fs.size = info.Size()
 		f.files = append(f.files, fs)
 		f.bySize[fs.size] = append(f.bySize[fs.size], fs)
 	}
