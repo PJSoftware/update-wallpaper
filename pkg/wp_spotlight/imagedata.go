@@ -1,4 +1,4 @@
-package spotlight
+package wp_spotlight
 
 // ImageData is the information extracted from the JSON files
 type ImageData struct {

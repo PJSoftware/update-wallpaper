@@ -1,14 +1,12 @@
-package spotlight
+package wp_spotlight
 
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/pjsoftware/update-wallpaper/pkg/paths"
 )
 
 // MetaData is the interface/container for ImageData entries
@@ -23,13 +21,15 @@ const noMetaCopyright string = "Unknown Photographer"
 
 // ImportAll is the entrypoint to all MetaData; it reads all relevant files
 func (m *MetaData) ImportAll() {
-	err := filepath.Walk(paths.GetSpotlightPaths().Metadata(),
-		func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(GetSpotlightPaths().Metadata(),
+		func(path string, info fs.DirEntry, err error) error {
+			fmt.Printf("Reading %s\n", path)
 			if err != nil {
 				return err
 			}
 
-			if info.Mode().IsRegular() {
+			fi, _ := info.Info()
+			if fi.Mode().IsRegular() {
 				match, _ := regexp.MatchString(`[\\/]\d+[\\/]\d+$`, path) // vs "[\\\\/]\\d+[\\\\/]\\d+$"
 				if match {
 					for _, jsonItem := range jsonItemsFromFile(path) {

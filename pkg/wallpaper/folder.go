@@ -16,7 +16,7 @@ type Folder struct {
 type File struct {
 	name string
 	size int64
-	hash string
+	// hash string
 }
 
 // ImportFolder is our constructor method
@@ -27,7 +27,7 @@ func ImportFolder(fPath string) *Folder {
 
 	files, err := os.ReadDir(f.path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("ImportFolder error reading %s: %v", f.path, err)
 	}
 
 	for _, file := range files {

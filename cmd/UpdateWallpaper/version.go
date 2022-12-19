@@ -1,3 +1,4 @@
 package main
 
-const uwVersion string = "1.4"
+const TITLE string = "Update Wallpaper"
+const VERSION string = "1.4"
