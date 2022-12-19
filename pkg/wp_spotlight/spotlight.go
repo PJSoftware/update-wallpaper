@@ -10,8 +10,13 @@ type spotlight struct {
 }
 
 func Update(folder string) {
+	fmt.Printf("Updating SPOTLIGHT images:\n")
 	wp := newSpotlight()
-	wp.assets = readAssets()
+	wp.assets = readAssets(folder)
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Code above works; code below not so much
+	/////////////////////////////////////////////////////////////////////////////
 
 	found := wp.assets.Count()
 	fmt.Printf("%d Spotlight images found\n", found)

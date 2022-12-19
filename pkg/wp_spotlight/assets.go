@@ -16,7 +16,7 @@ import (
 
 // Assets gives us a better way to handle our Asset collection
 type assets struct {
-	meta      MetaData
+	metadata      assetMetadata
 	matches   int
 	byName    map[string]*asset
 	sumBySize map[int64]map[string]string
@@ -38,19 +38,25 @@ type asset struct {
 	replace     string
 }
 
-func readAssets() *assets {
+func readAssets(folder string) *assets {
 	as := new(assets)
-	as.Init()
-	return as
-}
+	as.sourceFolder = spotlightAssetFolder
+	as.targetFolder = folder
 
-// Init scans the asset folder to find all the valid assets
-func (as *assets) Init() {
-	as.meta.ImportAll()
+	as.metadata.read()
+	for _, image := range as.metadata.images {
+		fmt.Printf("  IMAGE found: %s %s\n", image.description, image.copyright)
+	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Code above works; code below not so much
+	/////////////////////////////////////////////////////////////////////////////
 
 	as.byName = make(map[string]*asset)
 	as.sumBySize = make(map[int64]map[string]string)
+
 	as.browse()
+	return as
 }
 
 // Count returns the number of valid Assets found
@@ -95,7 +101,7 @@ func (as *assets) Compare() (int, int) {
 
 func isUnidentified(fn string) bool {
 	badPrefix := []string{
-		noMetaDescription,
+		NO_DESCRIPTION,
 		"ZZZ_",
 	}
 
@@ -145,7 +151,7 @@ func (as *assets) browse() {
 			}
 			as.sumBySize[fileSize][asset.name] = sha.FileHash(asset.path)
 			asset.copyThis = true
-			for _, image := range as.meta.Images {
+			for _, image := range as.metadata.images {
 				if image.FileSize() == fileSize {
 					// TODO: we should look at comparing with sha256 value too
 					// on the billion-to-one chance we get two assets with an
@@ -186,7 +192,7 @@ func (as *assets) wpExtension(assetPath string) string {
 }
 
 func (a *asset) hasName() bool {
-	return !startsWith(a.description, noMetaDescription)
+	return !startsWith(a.description, NO_DESCRIPTION)
 }
 
 func startsWith(testing string, target string) bool {

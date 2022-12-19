@@ -9,47 +9,43 @@ import (
 	"regexp"
 )
 
-// MetaData is the interface/container for ImageData entries
-type MetaData struct {
-	size       int
-	currentIdx int
-	Images     []ImageData
+// assetMetadata is the interface/container for ImageData entries
+type assetMetadata struct {
+	images     []ImageData
 }
 
-const noMetaDescription string = "Unidentified Photo"
-const noMetaCopyright string = "Unknown Photographer"
+const NO_DESCRIPTION string = "Unidentified Photo"
+const NO_COPYRIGHT string = "Unknown Photographer"
 
-// ImportAll is the entrypoint to all MetaData; it reads all relevant files
-func (m *MetaData) ImportAll() {
-	err := filepath.WalkDir(GetSpotlightPaths().Metadata(),
+// read is the entrypoint to all asset metadata; it reads all relevant files
+func (m *assetMetadata) read() {
+	mdPath := spotlightMetadataFolder
+	err := filepath.WalkDir(mdPath,
 		func(path string, info fs.DirEntry, err error) error {
-			fmt.Printf("Reading %s\n", path)
 			if err != nil {
 				return err
 			}
-
+			
 			fi, _ := info.Info()
 			if fi.Mode().IsRegular() {
 				match, _ := regexp.MatchString(`[\\/]\d+[\\/]\d+$`, path) // vs "[\\\\/]\\d+[\\\\/]\\d+$"
 				if match {
-					for _, jsonItem := range jsonItemsFromFile(path) {
-						m.parseJSON(jsonItem, path)
+					for _, jsonItem := range locateSpotlightMetadata(path) {
+						m.parseMetadata(jsonItem, path)
 					}
 				}
 			}
-			// data, err := readJSON(info.filepath)
 
 			return nil
 		})
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("error in ImportAll: %v\n", err)
 	}
-
 }
 
-// jsonItemsFromFile returns a slice of relevant Spotlight JSON items if found in file
-func jsonItemsFromFile(fileName string) []map[string]interface{} {
+// locateSpotlightMetadata returns a slice of relevant Spotlight JSON items if found in file
+func locateSpotlightMetadata(fileName string) []map[string]interface{} {
 	var rv []map[string]interface{}
 
 	rawData, err := ReadUTF16(fileName)
@@ -113,7 +109,7 @@ func jsonItemsFromFile(fileName string) []map[string]interface{} {
 }
 
 // read
-func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
+func (m *assetMetadata) parseMetadata(data map[string]interface{}, src string) {
 	if _, ok := data["properties"]; !ok {
 		return
 	}
@@ -129,9 +125,7 @@ func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
 		parseItems(data["items"].([]interface{}), &image)
 		image.metadataSrc = src
 
-		m.size++
-		m.currentIdx = m.size - 1
-		m.Images = append(m.Images, image)
+		m.images = append(m.images, image)
 	}
 }
 
@@ -155,8 +149,8 @@ func parseItems(item []interface{}, image *ImageData) bool {
 
 	if len(item) == 0 {
 		image.entityID = "UNKNOWN"
-		image.description = noMetaDescription
-		image.copyright = noMetaCopyright
+		image.description = NO_DESCRIPTION
+		image.copyright = NO_COPYRIGHT
 		return false
 	}
 
