@@ -8,16 +8,19 @@ import (
 )
 
 // FileHash for determining hash of file
-func FileHash(filePath string) string {
+func FileHash(filePath string) (string, error) {
 	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
 	defer file.Close()
 
-	if err == nil {
-		hash := sha256.New()
-		if _, err := io.Copy(hash, file); err == nil {
-			return hex.EncodeToString(hash.Sum(nil))
-		}
+	hash := sha256.New()
+	_, err = io.Copy(hash, file)
+	if err != nil {
+		return "", err
 	}
-
-	return ""
+		
+	str := hex.EncodeToString(hash.Sum(nil))
+	return str, nil
 }

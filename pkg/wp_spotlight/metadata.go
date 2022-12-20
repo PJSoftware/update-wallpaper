@@ -9,13 +9,25 @@ import (
 	"regexp"
 )
 
-// assetMetadata is the interface/container for ImageData entries
+// imageMetadata is the information extracted from the JSON files
+type imageMetadata struct {
+	fileSize      int64
+	width, height int64
+	sha256        string
+	url           string
+	entityID      string
+	copyright     string
+	description   string
+	metadataSrc   string
+}
+
+// assetMetadata is the interface/container for imageMetadata entries
 type assetMetadata struct {
-	images     []ImageData
+	imageMD []imageMetadata
 }
 
 const NO_DESCRIPTION string = "Unidentified Photo"
-const NO_COPYRIGHT string = "Unknown Photographer"
+const NO_COPYRIGHT string = "© Unknown Photographer"
 
 // read is the entrypoint to all asset metadata; it reads all relevant files
 func (m *assetMetadata) read() {
@@ -117,40 +129,38 @@ func (m *assetMetadata) parseMetadata(data map[string]interface{}, src string) {
 		return
 	}
 
-	var image ImageData
-
-	pOK := parseProperties(data["properties"].(map[string]interface{}), &image)
+	var metadata imageMetadata
+	pOK := parseProperties(data["properties"].(map[string]interface{}), &metadata)
 
 	if pOK {
-		parseItems(data["items"].([]interface{}), &image)
-		image.metadataSrc = src
-
-		m.images = append(m.images, image)
+		parseItems(data["items"].([]interface{}), &metadata)
+		metadata.metadataSrc = src
+		m.imageMD = append(m.imageMD, metadata)
 	}
 }
 
-func parseProperties(prop map[string]interface{}, image *ImageData) bool {
+func parseProperties(prop map[string]interface{}, metadata *imageMetadata) bool {
 	if _, ok := prop["landscapeImage"]; !ok {
 		return false
 	}
 	landscape := prop["landscapeImage"].(map[string]interface{})
 
-	image.fileSize = int64(float64From(landscape, "fileSize"))
-	image.height = int64(float64From(landscape, "height"))
-	image.width = int64(float64From(landscape, "width"))
-	image.sha256 = stringFrom(landscape, "sha256")
-	image.url = stringFrom(landscape, "image")
+	metadata.fileSize = int64(float64From(landscape, "fileSize"))
+	metadata.height = int64(float64From(landscape, "height"))
+	metadata.width = int64(float64From(landscape, "width"))
+	metadata.sha256 = stringFrom(landscape, "sha256")
+	metadata.url = stringFrom(landscape, "image")
 
-	return image.fileSize > 0
+	return metadata.fileSize > 0
 }
 
-func parseItems(item []interface{}, image *ImageData) bool {
+func parseItems(item []interface{}, metadata *imageMetadata) bool {
 	var ok bool
 
 	if len(item) == 0 {
-		image.entityID = "UNKNOWN"
-		image.description = NO_DESCRIPTION
-		image.copyright = NO_COPYRIGHT
+		metadata.entityID = "UNKNOWN"
+		metadata.description = NO_DESCRIPTION
+		metadata.copyright = NO_COPYRIGHT
 		return false
 	}
 
@@ -167,11 +177,11 @@ func parseItems(item []interface{}, image *ImageData) bool {
 		return false
 	}
 
-	image.entityID = stringFrom(item1, "entityId")
-	image.copyright = stringFrom(copyright, "text")
-	image.description = stringFrom(desc, "text")
+	metadata.entityID = stringFrom(item1, "entityId")
+	metadata.copyright = stringFrom(copyright, "text")
+	metadata.description = stringFrom(desc, "text")
 
-	return image.description != ""
+	return metadata.description != ""
 }
 
 func float64From(dat map[string]interface{}, key string) float64 {
