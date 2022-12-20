@@ -14,14 +14,14 @@ func Update(folder string) {
 	wp := newSpotlight()
 	wp.assets = readAssets(folder)
 
+	found := wp.assets.count()
+	fmt.Printf("%d Spotlight images found\n", found)
+
 	/////////////////////////////////////////////////////////////////////////////
 	// Code above works; code below not so much
 	/////////////////////////////////////////////////////////////////////////////
 
-	found := wp.assets.Count()
-	fmt.Printf("%d Spotlight images found\n", found)
-
-	total, duplicates := wp.assets.Compare()
+	total, duplicates := wp.assets.compareWithExisting()
 	fmt.Printf("%d Existing wallpapers found\n", found)
 	fmt.Printf("%d Spotlight assets match existing; skipping\n", duplicates)
 

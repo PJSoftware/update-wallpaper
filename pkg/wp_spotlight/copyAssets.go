@@ -16,13 +16,13 @@ import (
 // Code above works; code below not so much
 /////////////////////////////////////////////////////////////////////////////
 
-// Count returns the number of valid Assets found
-func (as *assets) Count() int {
+// count returns the number of valid Assets found
+func (as *assets) count() int {
 	return len(as.byName)
 }
 
-// Compare scans targetPath folder and compares to Assets
-func (as *assets) Compare() (int, int) {
+// compareWithExisting scans targetPath folder and compares to Assets
+func (as *assets) compareWithExisting() (int, int) {
 	wpFound := 0
 	matchesFound := 0
 	files, err := os.ReadDir(as.targetFolder)
@@ -78,7 +78,7 @@ func (as *assets) Copy() (int, int) {
 	copied := 0
 	renamed := 0
 
-	if as.Count() <= as.matches {
+	if as.count() <= as.matches {
 		return copied, renamed
 	}
 

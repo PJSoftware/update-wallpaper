@@ -46,14 +46,7 @@ func readAssets(folder string) *assets {
 	as.targetFolder = folder
 
 	as.metadata.read()
-	for _, metadata := range as.metadata.imageMD {
-		fmt.Printf("  METADATA found: %s %s\n", metadata.description, metadata.copyright)
-	}
-	
 	as.locateWallpapers()
-	for name, asset := range as.byName {
-		fmt.Printf("  IMAGE FOUND: %s (%s)\n", name, asset.description)
-	}
 	return as
 }
 
@@ -116,7 +109,7 @@ func (as *assets) addAsset(asset *asset, file fs.DirEntry) {
 	}
 
 	if asset.description == "" {
-		asset.description = NO_DESCRIPTION + " (no metadata)"
+		asset.description = NO_DESCRIPTION + " (" + asset.name + ")"
 		asset.copyright = NO_COPYRIGHT
 	}
 
