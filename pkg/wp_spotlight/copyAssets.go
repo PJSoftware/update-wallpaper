@@ -2,14 +2,13 @@ package wp_spotlight
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/pjsoftware/update-wallpaper/pkg/errors"
 	"github.com/pjsoftware/update-wallpaper/pkg/sha"
+	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
 )
 
 /////////////////////////////////////////////////////////////////////////////
@@ -172,28 +171,5 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 }
 
 func (a *asset) copyFile(fromFolder string) (int64, error) {
-	src := fromFolder + "/" + a.name
-	file, err := os.Stat(src)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
-	}
-	srcMTime := file.ModTime()
-
-	source, err := os.Open(src)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EReadError, Message: "Could not read source file"}
-	}
-	defer source.Close()
-
-	dest, err := os.Create(a.newPath)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
-	}
-
-	numBytes, _ := io.Copy(dest, source)
-	dest.Close()
-
-	err = os.Chtimes(a.newPath, srcMTime, srcMTime)
-
-	return numBytes, err
+	return wallpaper.Copy(fromFolder + "/" + a.name, a.newPath)
 }

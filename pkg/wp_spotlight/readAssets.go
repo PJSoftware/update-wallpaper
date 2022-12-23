@@ -2,14 +2,13 @@ package wp_spotlight
 
 import (
 	"fmt"
-	"image"
-	"image/jpeg"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/pjsoftware/update-wallpaper/pkg/sha"
+	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
 )
 
 // Assets gives us a better way to handle our Asset collection
@@ -119,23 +118,11 @@ func (as *assets) addAsset(asset *asset, file fs.DirEntry) {
 
 // identify examines asset files to determine whether they are wallpapers
 func (a *asset) identify() {
-	a.isWallpaper = false
-	assetFile, err := os.Open(a.path)
+	res, err := wallpaper.Resolution(a.path)
 	if err != nil {
-		return // Cannot read file, so not interested in it
+		a.isWallpaper = false
+		return
 	}
-	defer assetFile.Close()
 
-	imageData, err := jpeg.DecodeConfig(assetFile)
-	if err != nil {
-		return // not a jpg, so not interested in it
-	} 
-	
-	if isHD(imageData) {
-		a.isWallpaper = true
-	}
-}
-
-func isHD(image image.Config) bool {
-	return image.Width == 1920 && image.Height == 1080
+	a.isWallpaper = (res.Name == "HD")
 }
