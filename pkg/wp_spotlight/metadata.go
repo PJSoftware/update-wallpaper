@@ -1,55 +1,63 @@
-package spotlight
+package wp_spotlight
 
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
-
-	"github.com/pjsoftware/update-wallpaper/pkg/paths"
 )
 
-// MetaData is the interface/container for ImageData entries
-type MetaData struct {
-	size       int
-	currentIdx int
-	Images     []ImageData
+// imageMetadata is the information extracted from the JSON files
+type imageMetadata struct {
+	fileSize      int64
+	width, height int64
+	sha256        string
+	url           string
+	entityID      string
+	copyright     string
+	description   string
+	metadataSrc   string
 }
 
-const noMetaDescription string = "Unidentified Photo"
-const noMetaCopyright string = "Unknown Photographer"
+// assetMetadata is the interface/container for imageMetadata entries
+type assetMetadata struct {
+	imageMD []imageMetadata
+}
 
-// ImportAll is the entrypoint to all MetaData; it reads all relevant files
-func (m *MetaData) ImportAll() {
-	err := filepath.Walk(paths.GetSpotlightPaths().Metadata(),
-		func(path string, info os.FileInfo, err error) error {
+const NO_DESCRIPTION string = "Unidentified Photo"
+const NO_COPYRIGHT string = "© Unknown Photographer"
+
+// read is the entrypoint to all asset metadata; it reads all relevant files
+func (m *assetMetadata) read() {
+	mdPath := spotlightMetadataFolder
+	err := filepath.WalkDir(mdPath,
+		func(path string, info fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-
-			if info.Mode().IsRegular() {
+			
+			fi, _ := info.Info()
+			if fi.Mode().IsRegular() {
 				match, _ := regexp.MatchString(`[\\/]\d+[\\/]\d+$`, path) // vs "[\\\\/]\\d+[\\\\/]\\d+$"
 				if match {
-					for _, jsonItem := range jsonItemsFromFile(path) {
-						m.parseJSON(jsonItem, path)
+					for _, jsonItem := range locateSpotlightMetadata(path) {
+						m.parseMetadata(jsonItem, path)
 					}
 				}
 			}
-			// data, err := readJSON(info.filepath)
 
 			return nil
 		})
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("error in ImportAll: %v\n", err)
 	}
-
 }
 
-// jsonItemsFromFile returns a slice of relevant Spotlight JSON items if found in file
-func jsonItemsFromFile(fileName string) []map[string]interface{} {
+// locateSpotlightMetadata returns a slice of relevant Spotlight JSON items if found in file
+func locateSpotlightMetadata(fileName string) []map[string]interface{} {
 	var rv []map[string]interface{}
 
 	rawData, err := ReadUTF16(fileName)
@@ -113,7 +121,7 @@ func jsonItemsFromFile(fileName string) []map[string]interface{} {
 }
 
 // read
-func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
+func (m *assetMetadata) parseMetadata(data map[string]interface{}, src string) {
 	if _, ok := data["properties"]; !ok {
 		return
 	}
@@ -121,42 +129,38 @@ func (m *MetaData) parseJSON(data map[string]interface{}, src string) {
 		return
 	}
 
-	var image ImageData
-
-	pOK := parseProperties(data["properties"].(map[string]interface{}), &image)
+	var metadata imageMetadata
+	pOK := parseProperties(data["properties"].(map[string]interface{}), &metadata)
 
 	if pOK {
-		parseItems(data["items"].([]interface{}), &image)
-		image.metadataSrc = src
-
-		m.size++
-		m.currentIdx = m.size - 1
-		m.Images = append(m.Images, image)
+		parseItems(data["items"].([]interface{}), &metadata)
+		metadata.metadataSrc = src
+		m.imageMD = append(m.imageMD, metadata)
 	}
 }
 
-func parseProperties(prop map[string]interface{}, image *ImageData) bool {
+func parseProperties(prop map[string]interface{}, metadata *imageMetadata) bool {
 	if _, ok := prop["landscapeImage"]; !ok {
 		return false
 	}
 	landscape := prop["landscapeImage"].(map[string]interface{})
 
-	image.fileSize = int64(float64From(landscape, "fileSize"))
-	image.height = int64(float64From(landscape, "height"))
-	image.width = int64(float64From(landscape, "width"))
-	image.sha256 = stringFrom(landscape, "sha256")
-	image.url = stringFrom(landscape, "image")
+	metadata.fileSize = int64(float64From(landscape, "fileSize"))
+	metadata.height = int64(float64From(landscape, "height"))
+	metadata.width = int64(float64From(landscape, "width"))
+	metadata.sha256 = stringFrom(landscape, "sha256")
+	metadata.url = stringFrom(landscape, "image")
 
-	return image.fileSize > 0
+	return metadata.fileSize > 0
 }
 
-func parseItems(item []interface{}, image *ImageData) bool {
+func parseItems(item []interface{}, metadata *imageMetadata) bool {
 	var ok bool
 
 	if len(item) == 0 {
-		image.entityID = "UNKNOWN"
-		image.description = noMetaDescription
-		image.copyright = noMetaCopyright
+		metadata.entityID = "UNKNOWN"
+		metadata.description = NO_DESCRIPTION
+		metadata.copyright = NO_COPYRIGHT
 		return false
 	}
 
@@ -173,11 +177,11 @@ func parseItems(item []interface{}, image *ImageData) bool {
 		return false
 	}
 
-	image.entityID = stringFrom(item1, "entityId")
-	image.copyright = stringFrom(copyright, "text")
-	image.description = stringFrom(desc, "text")
+	metadata.entityID = stringFrom(item1, "entityId")
+	metadata.copyright = stringFrom(copyright, "text")
+	metadata.description = stringFrom(desc, "text")
 
-	return image.description != ""
+	return metadata.description != ""
 }
 
 func float64From(dat map[string]interface{}, key string) float64 {

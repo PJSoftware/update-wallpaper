@@ -1,4 +1,4 @@
-package spotlight
+package wp_spotlight
 
 import "testing"
 
@@ -11,7 +11,7 @@ func TestNewFilename(t *testing.T) {
 	const crSym string = "©"
 	nfCR := crSym + nfCRn + " | " + nfCRo1 + " | " + nfCRo2
 
-	a := new(Asset)
+	a := new(asset)
 	a.description = nfDesc
 	a.copyright = nfCR
 	input := a.description + " / " + a.copyright

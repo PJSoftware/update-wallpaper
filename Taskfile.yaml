@@ -17,7 +17,7 @@ tasks:
 
   run_wallpaper:
     internal: true
-    dir: c:\Wallpaper\bin
+    dir: c:\Wallpaper
     cmds:
       - ./UpdateWallpaper.exe
 
@@ -25,8 +25,9 @@ tasks:
     cmds:
       - task: build
       - mkdir -p /c/Wallpaper
-      - mkdir -p /c/Wallpaper/Spotlight
-      - mkdir -p /c/Wallpaper/bin
-      - cp ./build/UpdateWallpaper.exe /c/Wallpaper/bin
-      - cp ./ini/UpdateWallpaper.ini /c/Wallpaper/bin
+      - cp ./build/UpdateWallpaper.exe /c/Wallpaper
       - task: run_wallpaper
+
+  test:
+    cmds:
+      - go test ./pkg/*

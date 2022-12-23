@@ -1,4 +1,4 @@
-package spotlight
+package wp_spotlight
 
 import (
 	"bufio"
