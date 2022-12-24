@@ -1,4 +1,4 @@
-package errors
+package wperr
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ const (
 	EInternal     string = "E_INTERNAL"
 	EFileNotFound string = "E_NOT_FOUND"
 	EReadError    string = "E_READ_ERROR"
+	ECopyError    string = "E_COPY_ERROR"
 	EWriteError   string = "E_WRITE_ERROR"
 )
 

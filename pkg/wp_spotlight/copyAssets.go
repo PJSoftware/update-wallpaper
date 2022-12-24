@@ -2,14 +2,13 @@ package wp_spotlight
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/pjsoftware/update-wallpaper/pkg/errors"
 	"github.com/pjsoftware/update-wallpaper/pkg/sha"
+	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
 )
 
 /////////////////////////////////////////////////////////////////////////////
@@ -155,45 +154,18 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 		return 0, 1
 	}
 
-	numBytes, err := a.copyFile(sourcePath)
+	err := a.copyFile(sourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
-		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
+		fmt.Printf("Copied %s to %s\n", a.name, a.newName)
 		return 1, 0
-	}
-
-	if numBytes == 0 {
+	} else {
 		fmt.Printf("Error copying file: %v\n", err)
 		return 0, 0
 	}
 
-	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
-	return 1, 0
 }
 
-func (a *asset) copyFile(fromFolder string) (int64, error) {
-	src := fromFolder + "/" + a.name
-	file, err := os.Stat(src)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EFileNotFound, Message: "Source file not found"}
-	}
-	srcMTime := file.ModTime()
-
-	source, err := os.Open(src)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EReadError, Message: "Could not read source file"}
-	}
-	defer source.Close()
-
-	dest, err := os.Create(a.newPath)
-	if err != nil {
-		return 0, &errors.E{Code: errors.EWriteError, Message: "Could not create target file"}
-	}
-
-	numBytes, _ := io.Copy(dest, source)
-	dest.Close()
-
-	err = os.Chtimes(a.newPath, srcMTime, srcMTime)
-
-	return numBytes, err
+func (a *asset) copyFile(fromFolder string) error {
+	return wallpaper.Copy(fromFolder + "/" + a.name, a.newPath)
 }

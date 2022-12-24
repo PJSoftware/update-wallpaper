@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/pjsoftware/update-wallpaper/pkg/errors"
+	"github.com/pjsoftware/update-wallpaper/pkg/wperr"
 )
 
 const unnamedSection = "**PARENT**"
@@ -30,7 +30,7 @@ func (f *File) Parse(fileName string) error {
 
 	file, err := os.Open(fileName)
 	if err != nil {
-		return &errors.E{Code: errors.EFileNotFound}
+		return &wperr.E{Code: wperr.EFileNotFound}
 	}
 	defer file.Close()
 
@@ -79,7 +79,7 @@ func (f *File) Parse(fileName string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return &errors.E{Code: errors.EReadError}
+		return &wperr.E{Code: wperr.EReadError}
 	}
 
 	return nil

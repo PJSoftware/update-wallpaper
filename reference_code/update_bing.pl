@@ -5,9 +5,9 @@ use warnings;
 
 use File::Copy qw{ copy };
 
-my $lad = $ENV{LOCALAPPDATA};
-$lad =~ s{\\}{/}g;
-my $bw = "$lad/Microsoft/BingWallpaperApp/WPImages";
+# my $lad = $ENV{LOCALAPPDATA};
+# $lad =~ s{\\}{/}g;
+# my $bw = "$lad/Microsoft/BingWallpaperApp/WPImages";
 
 my $copied = 0;
 
