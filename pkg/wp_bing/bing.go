@@ -18,12 +18,20 @@ func Update(folder string) {
 	}
 
 	for _, file := range files {
-		path := filepath.Join(bingWallpaperFolder, file.Name())
-		res, err := wallpaper.Resolution(path)
+		source := filepath.Join(bingWallpaperFolder, file.Name())
+		res, err := wallpaper.Resolution(source)
 		if err != nil {
 			continue
 		}
 
-		fmt.Printf("- %s (%s - %dx%d)\n",file.Name(), res.Name, res.Width, res.Height)
+		targetFolder := filepath.Join(folder, res.Name)
+		err = os.MkdirAll(targetFolder, 0777)
+		if err != nil {
+			fmt.Printf("  Could not create %s\n", targetFolder)
+			continue
+		}
+
+		target := filepath.Join(targetFolder, file.Name())
+		wallpaper.Copy(source, target)
 	}
 }

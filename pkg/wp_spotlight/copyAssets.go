@@ -154,22 +154,18 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 		return 0, 1
 	}
 
-	numBytes, err := a.copyFile(sourcePath)
+	err := a.copyFile(sourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
-		fmt.Printf("Copied %d bytes of %s to %s\n", numBytes, a.name, a.newName)
+		fmt.Printf("Copied %s to %s\n", a.name, a.newName)
 		return 1, 0
-	}
-
-	if numBytes == 0 {
+	} else {
 		fmt.Printf("Error copying file: %v\n", err)
 		return 0, 0
 	}
 
-	fmt.Printf("Copied %d bytes of '%s' to '%s'; unable to set file time\n", numBytes, a.name, a.newName)
-	return 1, 0
 }
 
-func (a *asset) copyFile(fromFolder string) (int64, error) {
+func (a *asset) copyFile(fromFolder string) error {
 	return wallpaper.Copy(fromFolder + "/" + a.name, a.newPath)
 }
