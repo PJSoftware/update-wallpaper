@@ -10,7 +10,7 @@ import (
 )
 
 func Copy(sourcePath, targetPath string) error {
-	if fileExists(targetPath) {
+	if PathExists(targetPath) {
 		fmt.Printf("  Skipping existing %s\n", targetPath)
 		return nil
 	}
@@ -43,7 +43,7 @@ func Copy(sourcePath, targetPath string) error {
 	return err
 }
 
-func fileExists(path string) bool {
+func PathExists(path string) bool {
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return false
 	}

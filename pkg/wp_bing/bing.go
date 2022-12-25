@@ -2,20 +2,19 @@ package wp_bing
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
 )
 
-func Update(folder string) {
-	fmt.Printf("Updating BING images:\n")
-
+func Update(folder string) {	
 	files, err := os.ReadDir(bingWallpaperFolder)
 	if err != nil {
-		log.Fatalf("bing: Update() error reading %s: %v", bingWallpaperFolder, err)
+		fmt.Printf("Skipping BING processing; no folder found\n");
+		return
 	}
+	fmt.Printf("Updating BING images:\n")
 
 	for _, file := range files {
 		source := filepath.Join(bingWallpaperFolder, file.Name())
