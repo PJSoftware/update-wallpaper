@@ -16,6 +16,8 @@ func Update(folder string) {
 	}
 	fmt.Printf("Updating BING images:\n")
 
+	copied := 0
+	skipped := 0
 	for _, file := range files {
 		source := filepath.Join(bingWallpaperFolder, file.Name())
 		res, err := wallpaper.Resolution(source)
@@ -31,6 +33,15 @@ func Update(folder string) {
 		}
 
 		target := filepath.Join(targetFolder, file.Name())
-		wallpaper.Copy(source, target)
+		success, err := wallpaper.Copy(source, target)
+		if success {
+			copied++
+		} else if err != nil {
+			fmt.Printf("error copying file %s: %v", file.Name(), err)
+		} else {
+			skipped++
+		}
 	}
+
+	fmt.Printf("  %d new wallpapers copied; %d existing files skipped\n", copied, skipped)
 }

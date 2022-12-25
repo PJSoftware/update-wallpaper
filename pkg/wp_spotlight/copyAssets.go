@@ -154,7 +154,7 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 		return 0, 1
 	}
 
-	err := a.copyFile(sourcePath)
+	_, err := a.copyFile(sourcePath)
 	if err == nil {
 		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
 		fmt.Printf("Copied %s to %s\n", a.name, a.newName)
@@ -166,6 +166,6 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 
 }
 
-func (a *asset) copyFile(fromFolder string) error {
+func (a *asset) copyFile(fromFolder string) (bool, error) {
 	return wallpaper.Copy(fromFolder + "/" + a.name, a.newPath)
 }
