@@ -2,7 +2,6 @@ package wallpaper
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 
@@ -14,12 +13,10 @@ func Copy(sourcePath, targetPath string) (bool, error) {
 		return false, nil
 	}
 
-	fmt.Printf("  Copying to %s\n", targetPath)
-	file, err := os.Stat(sourcePath)
+	_, err := os.Stat(sourcePath)
 	if err != nil {
 		return false, &wperr.E{Code: wperr.EFileNotFound, Message: "Source file not found"}
 	}
-	srcMTime := file.ModTime()
 
 	source, err := os.Open(sourcePath)
 	if err != nil {
@@ -38,7 +35,6 @@ func Copy(sourcePath, targetPath string) (bool, error) {
 		return false, &wperr.E{Code: wperr.ECopyError, Message: "Could not copy file"}
 	}
 
-	err = os.Chtimes(targetPath, srcMTime, srcMTime)
 	return true, err
 }
 

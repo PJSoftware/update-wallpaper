@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/pjsoftware/update-wallpaper/pkg/sha"
 	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
@@ -41,13 +42,7 @@ func (as *assets) compareWithExisting() (int, int) {
 			}
 			for name, assetHash := range as.sumBySize[fileSize] {
 				if existingHash == assetHash {
-					if isUnidentified(file.Name()) && as.byName[name].hasName() {
-						log.Printf("** '%s' will replace existing '%s'", name, file.Name())
-						as.byName[name].replace = filePath
-					} else {
-						as.byName[name].toBeCopied = false
-						matchesFound++
-					}
+					as.byName[name].replace = file.Name()
 				}
 			}
 		}
@@ -55,20 +50,6 @@ func (as *assets) compareWithExisting() (int, int) {
 	}
 	as.matches = matchesFound
 	return wpFound, matchesFound
-}
-
-func isUnidentified(fn string) bool {
-	badPrefix := []string{
-		NO_DESCRIPTION,
-		"ZZZ_",
-	}
-
-	for _, prefix := range badPrefix {
-		if startsWith(fn, prefix) {
-			return true
-		}
-	}
-	return false
 }
 
 // Copy copies all new, non-matched assets to wallpaper
@@ -86,19 +67,6 @@ func (as *assets) Copy() (int, int) {
 		renamed += rc
 	}
 	return copied, renamed
-}
-
-func (a *asset) hasName() bool {
-	return !startsWith(a.description, NO_DESCRIPTION)
-}
-
-func startsWith(testing string, target string) bool {
-	lenTarget := len(target)
-	if len(testing) < lenTarget {
-		return false
-	}
-
-	return testing[0:lenTarget] == target
 }
 
 func (a *asset) setNewName(targetPath string) {
@@ -144,14 +112,16 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 	if a.replace != "" {
 		old := targetPath + "/" + a.replace
 		new := targetPath + "/" + a.newName
+		fmt.Printf("- Renaming: %s\n        to: %s\n", a.replace, a.newName)
 		os.Rename(old, new)
-		fmt.Printf("- Updating: %s\n", a.newName)
+		setTime(new)
 		return 0, 1
 	}
 
 	_, err := a.copyFile(sourcePath)
 	if err == nil {
 		fmt.Printf("- Copying: %s\n", a.newName)
+		setTime(targetPath + "/" + a.newName)
 		return 1, 0
 	}
 
@@ -161,4 +131,12 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 
 func (a *asset) copyFile(fromFolder string) (bool, error) {
 	return wallpaper.Copy(fromFolder+"/"+a.name, a.newPath)
+}
+
+func setTime(fileName string) {
+	currentTime := time.Now().Local()
+	err := os.Chtimes(fileName, currentTime, currentTime)
+	if err != nil {
+		fmt.Printf("  > error changing file time: %v\n", err)
+	}
 }
