@@ -21,11 +21,15 @@ tasks:
     cmds:
       - ./UpdateWallpaper.exe
 
-  run:
+  install:
     cmds:
       - task: build
       - mkdir -p /c/Wallpaper
       - cp ./build/UpdateWallpaper.exe /c/Wallpaper
+
+  run:
+    cmds:
+      - task: install
       - task: run_wallpaper
 
   test:
