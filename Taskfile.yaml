@@ -1,0 +1,37 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list-all
+
+  build:
+    sources:
+      - cmd/UpdateWallpaper/*.go
+      - pkg/**/*.go
+    cmds:
+      - go build -o build/UpdateWallpaper.exe ./cmd/UpdateWallpaper
+
+  run_wallpaper:
+    internal: true
+    dir: c:\Wallpaper
+    cmds:
+      - ./UpdateWallpaper.exe
+
+  install:
+    cmds:
+      - task: build
+      - mkdir -p /c/Wallpaper
+      - cp ./build/UpdateWallpaper.exe /c/Wallpaper
+
+  run:
+    cmds:
+      - task: install
+      - task: run_wallpaper
+
+  test:
+    cmds:
+      - go test ./pkg/*
