@@ -1,7 +1,6 @@
 package wp_spotlight
 
 import (
-	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -13,12 +12,12 @@ import (
 
 // Assets gives us a better way to handle our Asset collection
 type assets struct {
-	metadata      assetMetadata
-	matches   		int
-	byName    		map[string]*asset
-	sumBySize 		map[int64]map[string]string
-	sourceFolder 	string
-	targetFolder 	string
+	metadata     assetMetadata
+	matches      int
+	byName       map[string]*asset
+	sumBySize    map[int64]map[string]string
+	sourceFolder string
+	targetFolder string
 }
 
 // Asset provides an interface to the contents of the Windows
@@ -32,10 +31,10 @@ type asset struct {
 	description string
 	matched     bool
 
-	toBeCopied  bool
-	newName     string
-	newPath     string
-	replace     string
+	toBeCopied bool
+	newName    string
+	newPath    string
+	replace    string
 }
 
 // readAssets prepares a list of currently available Spotlight assets
@@ -61,7 +60,7 @@ func (as *assets) locateWallpapers() {
 
 	for _, file := range files {
 		asset := new(asset)
-		
+
 		asset.name = file.Name()
 		asset.path = filepath.Join(as.sourceFolder, asset.name)
 		asset.identify()
@@ -92,9 +91,6 @@ func (as *assets) addAsset(asset *asset, file fs.DirEntry) {
 
 	for _, metadata := range as.metadata.imageMD {
 		if metadata.fileSize == fileSize {
-			if asset.matched {
-				fmt.Printf("ASSET ALREADY MATCHED!!!\n")
-			}
 			// TODO: we should look at comparing with sha256 value too
 			// on the billion-to-one chance we get two assets with an
 			// identical size

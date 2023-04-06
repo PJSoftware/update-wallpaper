@@ -47,7 +47,6 @@ func (as *assets) compareWithExisting() (int, int) {
 					} else {
 						as.byName[name].toBeCopied = false
 						matchesFound++
-						log.Printf("** '%s' matched with '%s'", name, file.Name())
 					}
 				}
 			}
@@ -88,8 +87,6 @@ func (as *assets) Copy() (int, int) {
 	}
 	return copied, renamed
 }
-
-
 
 func (a *asset) hasName() bool {
 	return !startsWith(a.description, NO_DESCRIPTION)
@@ -141,7 +138,6 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 
 	a.setNewName(targetPath)
 	if _, err := os.Stat(a.newPath); err == nil {
-		log.Printf("* Skipped copying '%s'; different version already exists\n", a.newName)
 		return 0, 0
 	}
 
@@ -149,23 +145,20 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 		old := targetPath + "/" + a.replace
 		new := targetPath + "/" + a.newName
 		os.Rename(old, new)
-		log.Printf("New image %s replaced existing %s", a.newName, a.replace)
-		fmt.Printf("New name %s for existing unidentified image\n", a.newName)
+		fmt.Printf("- Updating: %s\n", a.newName)
 		return 0, 1
 	}
 
 	_, err := a.copyFile(sourcePath)
 	if err == nil {
-		log.Printf("New image: %s (copied from %s)", a.newName, a.name)
-		fmt.Printf("Copied %s to %s\n", a.name, a.newName)
+		fmt.Printf("- Copying: %s\n", a.newName)
 		return 1, 0
-	} else {
-		fmt.Printf("Error copying file: %v\n", err)
-		return 0, 0
 	}
 
+	fmt.Printf("Error copying file: %v\n", err)
+	return 0, 0
 }
 
 func (a *asset) copyFile(fromFolder string) (bool, error) {
-	return wallpaper.Copy(fromFolder + "/" + a.name, a.newPath)
+	return wallpaper.Copy(fromFolder+"/"+a.name, a.newPath)
 }
