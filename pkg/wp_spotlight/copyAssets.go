@@ -110,6 +110,11 @@ func (a *asset) publish(sourcePath, targetPath string) (int, int) {
 	}
 
 	if a.replace != "" {
+		if a.newName[:18] == NO_DESCRIPTION {
+			fmt.Printf("- Skip attempt to rename to %s\n", a.newName)
+			return 0, 0
+		}
+
 		old := targetPath + "/" + a.replace
 		new := targetPath + "/" + a.newName
 		fmt.Printf("- Renaming: %s\n        to: %s\n", a.replace, a.newName)
