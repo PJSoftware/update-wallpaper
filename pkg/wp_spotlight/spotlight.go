@@ -2,6 +2,7 @@ package wp_spotlight
 
 import (
 	"fmt"
+	"os"
 )
 
 type spotlight struct {
@@ -10,6 +11,7 @@ type spotlight struct {
 
 func Update(folder string) {
 	fmt.Printf("Updating SPOTLIGHT images:\n")
+	os.MkdirAll(folder, 0777)
 	wp := newSpotlight()
 	wp.assets = readAssets(folder)
 	found := wp.assets.count()

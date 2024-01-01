@@ -8,13 +8,14 @@ import (
 	"github.com/pjsoftware/update-wallpaper/pkg/wallpaper"
 )
 
-func Update(folder string) {	
+func Update(folder string) {
 	files, err := os.ReadDir(bingWallpaperFolder)
 	if err != nil {
-		fmt.Printf("Skipping BING processing; no folder found\n");
+		fmt.Printf("Skipping BING processing; no folder found\n")
 		return
 	}
 	fmt.Printf("Updating BING images:\n")
+	os.MkdirAll(folder, 0777)
 
 	copied := 0
 	skipped := 0

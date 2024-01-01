@@ -9,7 +9,7 @@ import (
 type App struct {
 	name     string
 	version  string
-	wpFolder string 
+	wpFolder string
 }
 
 func NewApp(name, version string) *App {
